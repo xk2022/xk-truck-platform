@@ -1,0 +1,24 @@
+spring:
+  datasource:
+    url: jdbc:mysql://db:3306/xk_truck?useSSL=true&requireSSL=false&serverTimezone=UTC&characterEncoding=utf8
+    username: ${DB_USER}
+    password: ${DB_PASS}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      maximum-pool-size: 30
+      minimum-idle: 5
+      connection-timeout: 20000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+
+  jpa:
+    hibernate:
+      ddl-auto: validate     # 正式環境要用 validate
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: false
+        jdbc.time_zone: UTC
+
+management:
+  endpoints.web.exposure.include: health,info
