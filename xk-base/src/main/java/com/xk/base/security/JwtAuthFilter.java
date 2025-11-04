@@ -35,14 +35,29 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                 Claims claims = jwtService.parseClaims(token);   // ✅ 0.13.0：getBody() 取 Claims
                 String username = claims.getSubject();
 
-                String[] rolesArr = claims.get("roles", String[].class);
-                List<String> roles = rolesArr == null ? List.of() : Arrays.asList(rolesArr);
+                Object raw = claims.get("roles");
+                List<String> roles =
+                        (raw instanceof java.util.List<?> l) ? l.stream().map(Object::toString).toList()
+                                : (raw instanceof String s) ? java.util.Arrays.asList(s.split(","))
+                                : java.util.List.of();
 
-                Collection<? extends GrantedAuthority> authorities = roles.stream().map(r -> r.startsWith("ROLE_") ? r : "ROLE_" + r).map(SimpleGrantedAuthority::new).collect(Collectors.toList());
+                // ✅ 只補一次 ROLE_
+                Collection<? extends GrantedAuthority> authorities = roles.stream()
+                        .filter(r -> r != null && !r.isBlank())
+                        .map(String::trim)
+                        .map(r -> r.startsWith("ROLE_") ? r : "ROLE_" + r)
+                        .map(SimpleGrantedAuthority::new)
+                        .collect(Collectors.toList());
 
-                SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken(username, null, authorities));
-            } catch (Exception ignore) {
+                // 🔎 關鍵日誌
+                System.out.println("[JWT] user=" + username + " roles=" + roles + " authorities=" + authorities);
+
+                var authToken = new UsernamePasswordAuthenticationToken(username, null, authorities);
+                SecurityContextHolder.getContext().setAuthentication(authToken);
+            } catch (Exception e) {
                 // token 無效：不設認證，交由 Security 授權規則處理（會得到 401/403）
+                System.out.println("[JWT] parse failed: " + e.getMessage());
+                SecurityContextHolder.clearContext();
             }
         }
         chain.doFilter(req, res);

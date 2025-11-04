@@ -1,0 +1,80 @@
+# -------------------------------------------------------------------
+# XploreKaleido Java Project - EditorConfig
+# 統一開發環境編碼、縮排、行寬、排版風格（IntelliJ / VSCode / Android Studio）
+# -------------------------------------------------------------------
+
+root = true
+
+# ============== 通用（所有檔案） ==============
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+indent_style = space
+indent_size = 4
+tab_width = 4
+max_line_length = 120
+
+# ============== Java ==============
+[*.java]
+indent_size = 4
+continuation_indent_size = 8
+max_line_length = 120
+
+# ---- 換行/縮排（防止 method chaining 擠成一行）----
+ij_continuation_indent_size = 8
+ij_java_method_call_chain_wrap = wrap_always         # 1 的語義：總是換行
+ij_java_method_call_wrap = wrap_always
+ij_java_method_parameters_wrap = wrap_always
+ij_java_call_parameters_new_line_after_left_paren = true
+ij_java_call_parameters_right_paren_on_new_line = true
+ij_java_align_multiline_parameters = true
+ij_java_align_multiline_method_parentheses = false
+
+# ---- 大括號/單行保持 ----
+ij_java_brace_style = end_of_line
+ij_java_space_before_brace = true
+ij_java_keep_simple_classes_in_one_line = false
+ij_java_keep_simple_methods_in_one_line = false
+
+# ---- 註解/註釋換行 ----
+ij_java_method_annotation_wrap = normal
+ij_java_class_annotation_wrap = normal
+
+# ---- import 規則（順序 + 分組 + 靜態分離）----
+# 先所有未歸類的（*），然後空行（|），再 javax、java、org、springframework、com
+ij_java_imports_layout = *,|,javax.**,java.**,org.**,org.springframework.**,com.**
+ij_java_imports_separate_static_imports = true
+
+# ---- 空白行規則 ----
+ij_java_blank_lines_around_class = 1
+ij_java_blank_lines_around_method = 1
+ij_java_blank_lines_before_package = 0
+ij_java_blank_lines_after_package = 1
+ij_java_blank_lines_after_imports = 1
+
+# ============== XML / YAML / Properties ==============
+[*.{xml,yml,yaml,properties}]
+indent_size = 2
+max_line_length = 100
+
+# ============== JSON ==============
+[*.json]
+indent_size = 2
+max_line_length = 100
+
+# ============== Markdown ==============
+[*.md]
+trim_trailing_whitespace = false
+max_line_length = 100
+
+# ============== Gradle / Groovy / Kotlin ==============
+[*.{gradle,groovy,kts}]
+indent_size = 4
+max_line_length = 120
+
+# ============== Git Ignore / Attributes ==============
+[*.{gitignore,gitattributes}]
+insert_final_newline = true
+trim_trailing_whitespace = true

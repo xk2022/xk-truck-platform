@@ -1,0 +1,43 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:xk_truck_test;MODE=MySQL;DB_CLOSE_DELAY=-1;DATABASE_TO_UPPER=false
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.H2Dialect
+        format_sql: true
+  flyway:
+    enabled: false   # 測試階段用 JPA 自動建表即可，正式用 Flyway
+
+# 你在 xk-base 的 SecurityProps 對應：
+security:
+  jwt:
+    secret: change-me-32chars-min-change-me-32chars-min-123456
+    issuer: test-issuer
+    expiryMinutes: 120
+  permitAll:
+    - /auth/login
+    - /v3/api-docs/**
+    - /swagger-ui/**
+    - /actuator/health
+  cors:
+    allowedOrigins: ["*"]
+    allowedMethods: ["GET","POST","PUT","DELETE","PATCH","OPTIONS"]
+    allowedHeaders: ["*"]
+    exposedHeaders: ["Authorization"]
+
+# 啟動種子資料（你的 UpmsSeedConfig 會跑）
+upms:
+  seed:
+    enabled: true
+
+logging:
+  level:
+    root: WARN
+    com.xk: INFO

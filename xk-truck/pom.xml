@@ -2,74 +2,106 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-    <modelVersion>4.0.0</modelVersion>
+  <modelVersion>4.0.0</modelVersion>
 
-    <parent>
-        <groupId>com.xk</groupId>
-        <artifactId>xk-truck-platform</artifactId>
-        <version>1.0.0-SNAPSHOT</version>
-    </parent>
-
-    <artifactId>xk-truck</artifactId>
+  <parent>
+    <groupId>com.xk</groupId>
+    <artifactId>xk-truck-platform</artifactId>
     <version>1.0.0-SNAPSHOT</version>
-    <packaging>jar</packaging>
+  </parent>
 
-    <dependencies>
-        <!-- 依賴 base 模組 -->
-        <dependency>
-            <groupId>com.xk</groupId>
-            <artifactId>xk-base</artifactId>
-            <version>1.0.0-SNAPSHOT</version>
-        </dependency>
+  <artifactId>xk-truck</artifactId>
+  <version>1.0.0-SNAPSHOT</version>
+  <packaging>jar</packaging>
 
-        <!-- Web -->
-        <!-- 提供 REST API (Controller)、包含 Tomcat 內嵌伺服器-->
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-web</artifactId>
-        </dependency>
+  <properties>
+    <bytebuddy.version>1.17.8</bytebuddy.version>
+  </properties>
 
-        <!-- JPA + MySQL -->
-        <!-- ORM 操作 (搭配 Hibernate)、方便做 CRUD -->
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-data-jpa</artifactId>
-        </dependency>
-        <!-- MySQL 驅動程式 -->
-        <dependency>
-            <groupId>com.mysql</groupId>
-            <artifactId>mysql-connector-j</artifactId>
-            <scope>runtime</scope>
-        </dependency>
+  <dependencies>
+    <!-- 依賴 base 模組 -->
+    <dependency>
+      <groupId>com.xk</groupId>
+      <artifactId>xk-base</artifactId>
+      <version>1.0.0-SNAPSHOT</version>
+    </dependency>
 
-        <!-- Swagger / OpenAPI (springdoc for Spring MVC) -->
-        <!-- 提供 Swagger UI (http://localhost:8080/swagger-ui.html)、自動生成 API 文件-->
-        <dependency>
-            <groupId>org.springdoc</groupId>
-            <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
-            <version>2.8.11</version>   <!-- 或最新 2.8.x 系列 -->
-        </dependency>
+    <!-- Web -->
+    <!-- 提供 REST API (Controller)、包含 Tomcat 內嵌伺服器-->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-web</artifactId>
+    </dependency>
 
-        <!-- Test -->
-        <!-- 測試套件 (JUnit, MockMvc) -->
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-test</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.projectlombok</groupId>
-            <artifactId>lombok</artifactId>
-            <version>1.18.34</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-            <version>3.8.1</version>
-            <scope>test</scope>
-        </dependency>
+    <!-- JPA + MySQL -->
+    <!-- ORM 操作 (搭配 Hibernate)、方便做 CRUD -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-data-jpa</artifactId>
+    </dependency>
+    <!-- MySQL 驅動程式 -->
+    <dependency>
+      <groupId>com.mysql</groupId>
+      <artifactId>mysql-connector-j</artifactId>
+      <scope>runtime</scope>
+    </dependency>
 
-    </dependencies>
+    <!-- Swagger / OpenAPI (springdoc for Spring MVC) -->
+    <!-- 提供 Swagger UI (http://localhost:8080/swagger-ui.html)、自動生成 API 文件-->
+    <dependency>
+      <groupId>org.springdoc</groupId>
+      <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+      <version>2.8.11</version>   <!-- 或最新 2.8.x 系列 -->
+    </dependency>
+
+    <!-- Test -->
+    <!-- 測試套件 (JUnit, MockMvc) -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-test</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.h2database</groupId>
+      <artifactId>h2</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+
+    <dependency>
+      <groupId>org.projectlombok</groupId>
+      <artifactId>lombok</artifactId>
+      <version>1.18.34</version>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <version>3.8.1</version>
+      <scope>test</scope>
+    </dependency>
+
+  </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <version>3.5.2</version>
+        <configuration>
+          <argLine>
+            -javaagent:${settings.localRepository}/net/bytebuddy/byte-buddy-agent/${bytebuddy.version}/byte-buddy-agent-${bytebuddy.version}.jar
+          </argLine>
+        </configuration>
+        <dependencies>
+          <dependency>
+            <groupId>net.bytebuddy</groupId>
+            <artifactId>byte-buddy-agent</artifactId>
+            <version>${bytebuddy.version}</version>
+          </dependency>
+        </dependencies>
+      </plugin>
+    </plugins>
+  </build>
 
 </project>

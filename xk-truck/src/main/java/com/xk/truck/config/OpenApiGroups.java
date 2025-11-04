@@ -22,4 +22,21 @@ public class OpenApiGroups {
                 .pathsToMatch("/api/orders/**")
                 .build();
     }
+
+    // ✅ 新增 UPMS 分組：兩種擇一（paths 或 package）
+    @Bean
+    GroupedOpenApi upmsApis() {
+        return GroupedOpenApi.builder()
+                .group("upms")
+                .pathsToMatch("/api/upms/**")                // 用路徑分組
+                // .packagesToScan("com.xk.truck.upms.controller.api") // 或用封包分組
+                .build();
+    }
+
+    // ✅ 只在 dev/local 顯示 debug 分組
+    @Bean
+//    @Profile({"dev","local"})
+    GroupedOpenApi debugApis() {
+        return GroupedOpenApi.builder().group("debug").pathsToMatch("/_me").build();
+    }
 }
