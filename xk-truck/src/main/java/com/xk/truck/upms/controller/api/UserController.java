@@ -18,7 +18,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 import java.util.UUID;
 
 /**
@@ -44,7 +43,7 @@ public class UserController {
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping
     public ApiResult<UserResp> create(@RequestBody UserCreateReq req) {
-        return ApiResult.success(userService.create(req), "使用者建立成功");
+        return ApiResult.success(userService.create(req));
     }
 
     @Operation(summary = "查詢使用者列表（支援分頁）")
@@ -55,21 +54,21 @@ public class UserController {
             @RequestParam(defaultValue = "10") int size) {
         Pageable pageable = PageRequest.of(page, size, Sort.by("createdTime").descending());
         Page<UserResp> result = userService.list(pageable);
-        return ApiResult.success(result, "查詢成功");
+        return ApiResult.success(result);
     }
 
     @Operation(summary = "取得單一使用者", description = "依 UUID 查詢指定使用者")
     @GetMapping("/{id}")
     public ResponseEntity<ApiResult<UserResp>> get(@PathVariable UUID id) {
         UserResp user = userService.findById(id);
-        return ResponseEntity.ok(ApiResult.success(user, "查詢成功"));
+        return ResponseEntity.ok(ApiResult.success(user));
     }
 
     @Operation(summary = "更新使用者")
     @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/{id}")
     public ApiResult<UserResp> update(@PathVariable UUID id, @RequestBody UserUpdateReq req) {
-        return ApiResult.success(userService.update(id, req), "更新成功");
+        return ApiResult.success(userService.update(id, req));
     }
 
     @Operation(summary = "啟用或停用帳號", description = "切換使用者啟用狀態")
@@ -78,7 +77,7 @@ public class UserController {
                                                       @RequestParam boolean enabled) {
         UserResp result = userService.enable(id, enabled);
         String msg = enabled ? "使用者已啟用" : "使用者已停用";
-        return ResponseEntity.ok(ApiResult.success(result, msg));
+        return ResponseEntity.ok(ApiResult.success(result));
     }
 
     @Operation(summary = "重設密碼", description = "管理員可為使用者重設新密碼")
@@ -86,7 +85,7 @@ public class UserController {
     public ResponseEntity<ApiResult<Void>> resetPassword(@PathVariable UUID id,
                                                          @RequestParam String newPassword) {
         userService.resetPassword(id, newPassword);
-        return ResponseEntity.ok(ApiResult.success(null, "密碼已重設"));
+        return ResponseEntity.ok(ApiResult.success(null));
     }
 
     @Operation(summary = "刪除使用者", description = "刪除指定使用者（MVP 版本採硬刪除）")
@@ -94,6 +93,6 @@ public class UserController {
     @DeleteMapping("/{id}")
     public ApiResult<Void> delete(@PathVariable UUID id) {
         userService.delete(id);
-        return ApiResult.success(null, "使用者已刪除");
+        return ApiResult.success(null);
     }
 }

@@ -3,6 +3,7 @@ package com.xk.base.domain.model;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.*;
 import lombok.Data;
+
 import org.hibernate.annotations.Comment;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
@@ -15,14 +16,14 @@ import java.time.ZonedDateTime;
 
 /**
  * 🧱 BaseEntity — 通用實體基類
- *
+ * <p>
  * 提供：
  * - 審計欄位（createdBy, updatedBy, createdTime, updatedTime）
  * - 可選狀態欄位（status, enabled, locked, deleted, remark）
  * - JPA 審計支援（需在啟動類中啟用 @EnableJpaAuditing）
- *
+ * <p>
  * 📍 放置於 xk-base 模組，供所有子模組繼承。
- *
+ * <p>
  * 例如：
  * <pre>
  * @Entity
@@ -91,9 +92,15 @@ public abstract class BaseEntity implements Serializable {
 
     // ========== 分組校驗標記（可用於 Validation） ==========
 
-    /** 建立時驗證組 */
-    public @interface Create {}
+    /**
+     * 建立時驗證組
+     */
+    public @interface Create {
+    }
 
-    /** 更新時驗證組 */
-    public @interface Update {}
+    /**
+     * 更新時驗證組
+     */
+    public @interface Update {
+    }
 }

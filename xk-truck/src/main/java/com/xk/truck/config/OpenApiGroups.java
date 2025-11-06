@@ -16,6 +16,14 @@ public class OpenApiGroups {
     }
 
     @Bean
+    GroupedOpenApi apis() {
+        return GroupedOpenApi.builder()
+                .group("api")
+                .pathsToMatch("/api/**")
+                .build();
+    }
+
+    @Bean
     GroupedOpenApi orderApis() {
         return GroupedOpenApi.builder()
                 .group("orders")
@@ -33,10 +41,12 @@ public class OpenApiGroups {
                 .build();
     }
 
-    // ✅ 只在 dev/local 顯示 debug 分組
     @Bean
-//    @Profile({"dev","local"})
-    GroupedOpenApi debugApis() {
-        return GroupedOpenApi.builder().group("debug").pathsToMatch("/_me").build();
+    public GroupedOpenApi fmsApis() {
+        return GroupedOpenApi.builder()
+                .group("fms")
+//                .packagesToScan("com.xk.truck.fms")
+                .pathsToMatch("/api/fms/**")
+                .build();
     }
 }

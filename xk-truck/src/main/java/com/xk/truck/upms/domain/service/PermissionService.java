@@ -88,4 +88,8 @@ public class PermissionService {
     public boolean existsByCode(String code) {
         return permRepo.existsByCode(code);
     }
+
+    public boolean exists(String code) {
+        return permRepo.existsByCode(code);
+    }
 }

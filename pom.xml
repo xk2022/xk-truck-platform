@@ -18,6 +18,7 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     <maven.compiler.release>21</maven.compiler.release>
+    <lombok.version>1.18.36</lombok.version>
   </properties>
 
   <dependencyManagement>
@@ -30,6 +31,14 @@
         <type>pom</type>
         <scope>import</scope>
       </dependency>
+
+      <!-- 在父層集中管理 Lombok 版本 -->
+      <dependency>
+        <groupId>org.projectlombok</groupId>
+        <artifactId>lombok</artifactId>
+        <version>${lombok.version}</version>
+        <scope>provided</scope>
+      </dependency>
     </dependencies>
   </dependencyManagement>
 
@@ -37,14 +46,21 @@
     <!-- 1) 鎖定外掛版本（子模組統一繼承） -->
     <pluginManagement>
       <plugins>
-        <!-- Java 21 編譯 -->
+        <!-- Java 21 編譯，開啟 -parameters 與 Lombok 註解處理 -->
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-compiler-plugin</artifactId>
           <version>3.13.0</version>
           <configuration>
             <release>${maven.compiler.release}</release>
-            <parameters>true</parameters> <!-- 產生方法參數名稱，方便反射/Swagger -->
+            <parameters>true</parameters>
+            <annotationProcessorPaths>
+              <path>
+                <groupId>org.projectlombok</groupId>
+                <artifactId>lombok</artifactId>
+                <version>${lombok.version}</version>
+              </path>
+            </annotationProcessorPaths>
           </configuration>
         </plugin>
 
@@ -138,6 +154,5 @@
       </plugin>
     </plugins>
   </build>
-
 
 </project>

@@ -121,4 +121,7 @@ public class UserService {
         return userRepo.existsByUsername(username);
     }
 
+    public boolean exists(String username) {
+        return userRepo.existsByUsername(username);
+    }
 }

@@ -40,7 +40,7 @@ public class PermissionController {
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping
     public ApiResult<PermissionResp> create(@RequestBody PermissionCreateReq req) {
-        return ApiResult.success(permissionService.create(req), "權限建立成功");
+        return ApiResult.success(permissionService.create(req));
     }
 
     @Operation(summary = "查詢權限列表（支援分頁）", description = "回傳權限清單")
@@ -51,14 +51,14 @@ public class PermissionController {
             @RequestParam(defaultValue = "10") int size) {
         Pageable pageable = PageRequest.of(page, size, Sort.by("createdTime").descending());
         Page<PermissionResp> result = permissionService.list(pageable);
-        return ApiResult.success(result, "查詢成功");
+        return ApiResult.success(result);
     }
 
     @Operation(summary = "取得單一權限", description = "依 UUID 查詢指定權限")
     @GetMapping("/{id}")
     public ResponseEntity<ApiResult<PermissionResp>> get(@PathVariable UUID id) {
         PermissionResp perm = permissionService.findById(id);
-        return ResponseEntity.ok(ApiResult.success(perm, "查詢成功"));
+        return ResponseEntity.ok(ApiResult.success(perm));
     }
 
     @Operation(summary = "更新權限", description = "更新權限名稱或描述")
@@ -66,7 +66,7 @@ public class PermissionController {
     public ResponseEntity<ApiResult<PermissionResp>> update(@PathVariable UUID id,
                                                             @RequestBody PermissionUpdateReq req) {
         PermissionResp updated = permissionService.update(id, req);
-        return ResponseEntity.ok(ApiResult.success(updated, "更新成功"));
+        return ResponseEntity.ok(ApiResult.success(updated));
     }
 
     @Operation(summary = "刪除權限", description = "刪除指定權限（MVP 為硬刪除）")
@@ -74,6 +74,6 @@ public class PermissionController {
     @DeleteMapping("/{id}")
     public ApiResult<Void> delete(@PathVariable UUID id) {
         permissionService.delete(id);
-        return ApiResult.success(null, "權限已刪除");
+        return ApiResult.success(null);
     }
 }

@@ -1,13 +1,20 @@
 package com.xk.base.security;
 
+import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
-import org.springframework.boot.context.properties.ConfigurationProperties;
 
+import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.stereotype.Component;
+import org.springframework.boot.convert.DurationUnit;
+
+import java.time.Duration;
+import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.List;
 
-@Getter
-@Setter
+@Data
+@Component
 @ConfigurationProperties(prefix = "security")
 public class SecurityProps {
 
@@ -17,25 +24,44 @@ public class SecurityProps {
     /**
      * 放行路徑（prefix 支援 /**）
      */
-    private List<String> permitAll = List.of("/auth/login", "/swagger-ui/**", "/v3/api-docs/**", "/actuator/health");
+    private List<String> permitAll = new ArrayList<>(List.of(
+            "/auth/login",
+            "/swagger-ui/**",
+            "/v3/api-docs/**",
+            "/actuator/health"
+    ));
 
-    @Getter
-    @Setter
+    @Data
     public static class Jwt {
         /**
-         * 至少 32 字以上隨機字串（HMAC-256）
+         * 建議使用 Base64 編碼、長度 >= 32 bytes（HS256）
          */
-        private String secret = "change-me-32chars-min-change-me-32chars-min";
-        private String issuer = "xk-platform";
-        private long expiryMinutes = 120;
+        private String secret;
+
+        /**
+         * JWT issuer
+         */
+        private String issuer = "xk-truck";
+
+        /**
+         * 預設存活時間（預設 120 分鐘）
+         */
+        @DurationUnit(ChronoUnit.MINUTES)
+        private Duration expiry = Duration.ofMinutes(120);
+
+        // 若你仍想用分鐘數，也可保留 Long expiryMinutes，搭配 converter 在 service 轉成 Duration
     }
 
     @Getter
     @Setter
     public static class Cors {
-        private List<String> allowedOrigins = List.of("*");
-        private List<String> allowedMethods = List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS");
-        private List<String> allowedHeaders = List.of("*");
-        private List<String> exposedHeaders = List.of("Authorization");
+        /**
+         * 注意：若要 withCredentials=true，不能用 "*"，請改成明確網域
+         */
+        private List<String> allowedOrigins = new ArrayList<>(List.of("*"));
+        private List<String> allowedMethods = new ArrayList<>(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
+        private List<String> allowedHeaders = new ArrayList<>(List.of("*"));
+        private List<String> exposedHeaders = new ArrayList<>(List.of("Authorization"));
+        // 可視需求再加：private Boolean allowCredentials = false;
     }
 }

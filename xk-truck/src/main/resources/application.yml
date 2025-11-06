@@ -6,7 +6,9 @@ spring:
 
 security:
   jwt:
-    secret: "my-super-secret-key-which-is-long-enough-1234567890"
+    # 建議：使用 32 bytes 以上隨機金鑰，並以 Base64 存放
+    # 可用 `openssl rand -base64 32` 產生
+    secret: "qJ9H5K7K0lY4kT0xJ1w+0yPq2Qv6x5rG3mJ7oX2tB8c="
     # secret: ${JWT_SECRET} create with # openssl rand -base64 64
     issuer: "xk-truck"
     expiry-minutes: 120
@@ -22,6 +24,12 @@ security:
     - /v3/api-docs/**
     - /actuator/health
 
+logging:
+  level:
+    org.springframework.security: DEBUG
+    com.xk.truck: DEBUG   # 讓我們看得到 seed log
+    com.xk.base:  DEBUG
+
 springdoc:
   api-docs:
     enabled: true
@@ -34,6 +42,7 @@ springdoc:
 
 upms:
   seed:
+    enabled: true
     roles:
       - code: ADMIN
         name: 系統管理員

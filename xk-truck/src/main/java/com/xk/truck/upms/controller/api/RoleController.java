@@ -42,7 +42,7 @@ public class RoleController {
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping
     public ApiResult<RoleResp> create(@RequestBody RoleCreateReq req) {
-        return ApiResult.success(roleService.create(req), "角色建立成功");
+        return ApiResult.success(roleService.create(req));
     }
 
     @Operation(summary = "查詢角色列表（支援分頁）", description = "回傳所有角色清單")
@@ -53,21 +53,21 @@ public class RoleController {
             @RequestParam(defaultValue = "10") int size) {
         Pageable pageable = PageRequest.of(page, size, Sort.by("createdTime").descending());
         Page<RoleResp> result = roleService.list(pageable);
-        return ApiResult.success(result, "查詢成功");
+        return ApiResult.success(result);
     }
 
     @Operation(summary = "取得單一角色", description = "依 UUID 查詢指定角色")
     @GetMapping("/{id}")
     public ResponseEntity<ApiResult<RoleResp>> get(@PathVariable UUID id) {
         RoleResp role = roleService.findById(id);
-        return ResponseEntity.ok(ApiResult.success(role, "查詢成功"));
+        return ResponseEntity.ok(ApiResult.success(role));
     }
 
     @Operation(summary = "更新角色", description = "更新角色名稱與權限綁定")
     @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/{id}")
     public ApiResult<RoleResp> update(@PathVariable UUID id, @RequestBody RoleUpdateReq req) {
-        return ApiResult.success(roleService.update(id, req), "更新成功");
+        return ApiResult.success(roleService.update(id, req));
     }
 
     @Operation(summary = "刪除角色", description = "刪除指定角色（MVP 版本為硬刪除）")
@@ -75,6 +75,6 @@ public class RoleController {
     @DeleteMapping("/{id}")
     public ApiResult<Void> delete(@PathVariable UUID id) {
         roleService.delete(id);
-        return ApiResult.success(null, "角色已刪除");
+        return ApiResult.success(null);
     }
 }

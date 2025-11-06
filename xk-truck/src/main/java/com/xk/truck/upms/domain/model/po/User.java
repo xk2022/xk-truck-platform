@@ -13,6 +13,7 @@ import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.UuidGenerator;
 import org.hibernate.type.SqlTypes;
 
+import java.sql.ConnectionBuilder;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;

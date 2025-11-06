@@ -28,7 +28,7 @@ public class ApiResponseAdvice implements ResponseBodyAdvice<Object> {
 
         // null → 空成功
         if (body == null) {
-            return ApiResult.success(null, "OK");
+            return ApiResult.success(null);
         }
 
         // 已經是 ApiResult → 原樣回傳
@@ -37,6 +37,6 @@ public class ApiResponseAdvice implements ResponseBodyAdvice<Object> {
         }
 
         // 其他 → 包裝成 ApiResult
-        return ApiResult.success(body, "OK");
+        return ApiResult.success(body);
     }
 }

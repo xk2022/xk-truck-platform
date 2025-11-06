@@ -97,4 +97,8 @@ public class RoleService {
     public boolean existsByCode(String code) {
         return roleRepo.existsByCode(code);
     }
+
+    public boolean exists(String code) {
+        return roleRepo.existsByCode(code);
+    }
 }
