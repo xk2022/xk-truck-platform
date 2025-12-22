@@ -54,6 +54,9 @@ public class ApiResult<T> {
      * @param data 回應數據
      * @return 成功的 BaseResult 實例
      */
+    public static <T> ApiResult<T> success() {
+        return new ApiResult<>(HttpStatus.OK.value(), null, null, null, LocalDateTime.now());
+    }
     public static <T> ApiResult<T> success(T data) {
         return new ApiResult<>(HttpStatus.OK.value(), null, data, null, LocalDateTime.now());
     }

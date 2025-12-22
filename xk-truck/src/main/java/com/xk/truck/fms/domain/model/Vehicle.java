@@ -43,12 +43,15 @@ public class Vehicle extends BaseEntity {
     private VehicleStatus status = VehicleStatus.AVAILABLE;
 
     @Column(length = 50)
+    @Schema(description = "車輛品牌")
     private String brand;
 
     @Column(length = 50)
+    @Schema(description = "車型（車款 / 等級）")
     private String model;
 
     @Column(name = "capacity_ton")
+    @Schema(description = "載重噸數")
     private Double capacityTon;
 
     @Column(name = "current_driver_id", columnDefinition = "BINARY(16)")

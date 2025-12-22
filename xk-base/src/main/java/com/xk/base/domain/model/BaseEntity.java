@@ -85,10 +85,10 @@ public abstract class BaseEntity implements Serializable {
 //    @Column(name = "deleted_time")
 //    @Comment("刪除時間(軟刪除)")
 //    private ZonedDateTime deletedTime;
-//
-//    @Column(length = 500)
-//    @Comment("備註")
-//    private String remark;
+
+    @Column(length = 500)
+    @Comment("備註")
+    private String remark;
 
     // ========== 分組校驗標記（可用於 Validation） ==========
 

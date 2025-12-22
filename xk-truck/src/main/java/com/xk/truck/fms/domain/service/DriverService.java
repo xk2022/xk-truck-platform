@@ -5,7 +5,7 @@ import com.xk.truck.fms.controller.api.dto.DriverCreateReq;
 import com.xk.truck.fms.controller.api.dto.DriverResp;
 import com.xk.truck.fms.domain.model.Driver;
 import com.xk.truck.fms.domain.model.DriverStatus;
-import com.xk.truck.fms.domain.repo.DriverRepository;
+import com.xk.truck.fms.domain.repository.DriverRepository;
 
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;

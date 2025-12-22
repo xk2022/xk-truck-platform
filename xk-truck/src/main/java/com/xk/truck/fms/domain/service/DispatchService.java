@@ -2,7 +2,7 @@ package com.xk.truck.fms.domain.service;
 
 import com.xk.truck.fms.domain.model.DispatchStatus;
 import com.xk.truck.fms.domain.model.DispatchTask;
-import com.xk.truck.fms.domain.repo.DispatchTaskRepository;
+import com.xk.truck.fms.domain.repository.DispatchTaskRepository;
 
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;

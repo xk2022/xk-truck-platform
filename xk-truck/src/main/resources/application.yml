@@ -27,8 +27,8 @@ security:
 logging:
   level:
     org.springframework.security: DEBUG
-    com.xk.truck: DEBUG   # 讓我們看得到 seed log
     com.xk.base:  DEBUG
+    com.xk.truck: DEBUG   # 讓我們看得到 seed log
 
 springdoc:
   api-docs:

@@ -3,7 +3,7 @@ package com.xk.truck.upms.controller.api;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.xk.App;
 import com.xk.truck.upms.controller.api.dto.auth.LoginReq;
-import com.xk.truck.upms.domain.service.UserService;
+import com.xk.truck.upms.application.UserService;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -12,7 +12,6 @@ import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.http.*;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.web.client.RestTemplate;
 
 import java.util.Map;
 

@@ -1,0 +1,1 @@
+package com.xk.truck.upms.controller.api.dto.profile;import lombok.Data;@Datapublic class UserProfileCreateReq {    private String name;    private String nickName;    private String email;    private String phone;    private String avatarUrl;}

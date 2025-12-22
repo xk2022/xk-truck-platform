@@ -26,8 +26,8 @@ public class OpenApiGroups {
     @Bean
     GroupedOpenApi orderApis() {
         return GroupedOpenApi.builder()
-                .group("orders")
-                .pathsToMatch("/api/orders/**")
+                .group("tom")
+                .pathsToMatch("/api/tom/**")
                 .build();
     }
 
@@ -47,6 +47,15 @@ public class OpenApiGroups {
                 .group("fms")
 //                .packagesToScan("com.xk.truck.fms")
                 .pathsToMatch("/api/fms/**")
+                .build();
+    }
+
+    @Bean
+    public GroupedOpenApi admApis() {
+        return GroupedOpenApi.builder()
+                .group("adm")
+//                .packagesToScan("com.xk.truck.adm")
+                .pathsToMatch("/api/adm/**")
                 .build();
     }
 }

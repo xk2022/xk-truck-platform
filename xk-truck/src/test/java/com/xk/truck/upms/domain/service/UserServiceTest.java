@@ -1,16 +1,16 @@
 package com.xk.truck.upms.domain.service;
 
 import com.xk.base.exception.BusinessException;
-import com.xk.truck.upms.controller.api.dto.permission.PermissionResp;
+import com.xk.truck.upms.application.RoleService;
+import com.xk.truck.upms.application.UserService;
 import com.xk.truck.upms.controller.api.dto.role.RoleCreateReq;
-import com.xk.truck.upms.controller.api.dto.role.RoleResp;
 import com.xk.truck.upms.controller.api.dto.user.UserCreateReq;
 import com.xk.truck.upms.controller.api.dto.user.UserResp;
 import com.xk.truck.upms.controller.api.dto.user.UserUpdateReq;
-import com.xk.truck.upms.domain.dao.repository.RoleRepository;
-import com.xk.truck.upms.domain.dao.repository.UserRepository;
-import com.xk.truck.upms.domain.model.po.Role;
-import com.xk.truck.upms.domain.model.po.User;
+import com.xk.truck.upms.domain.repository.RoleRepository;
+import com.xk.truck.upms.domain.repository.UserRepository;
+import com.xk.truck.upms.domain.model.Role;
+import com.xk.truck.upms.domain.model.User;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.*;
