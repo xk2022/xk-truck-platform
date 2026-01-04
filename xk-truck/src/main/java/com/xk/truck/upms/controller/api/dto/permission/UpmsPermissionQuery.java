@@ -1,5 +1,7 @@
 package com.xk.truck.upms.controller.api.dto.permission;
 
+import com.xk.base.web.dto.query.BaseKeywordQuery;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
@@ -24,38 +26,24 @@ import lombok.Data;
  */
 @Data
 @Schema(description = "UPMS 權限查詢條件")
-public class UpmsPermissionQuery {
-
-    // ===============================================================
-    // Keyword
-    // ===============================================================
-
-    @Schema(
-            description = "關鍵字（模糊查詢 code / name）",
-            example = "USER"
-    )
-    private String keyword;
-
-    // ===============================================================
-    // Status
-    // ===============================================================
-
-    @Schema(description = "是否啟用")
-    private Boolean enabled;
-
-    // ===============================================================
-    // Type / System
-    // ===============================================================
-
-    @Schema(
-            description = "權限類型（如 API / MENU / BUTTON）",
-            example = "API"
-    )
-    private String type;
+public class UpmsPermissionQuery extends BaseKeywordQuery {
 
     @Schema(
             description = "所屬系統代碼",
             example = "UPMS"
     )
     private String systemCode;
+
+    /**
+     * 是否啟用
+     * <p>
+     * - true  : 只查啟用權限
+     * - false : 只查停用權限
+     * - null  : 不限制
+     */
+    @Schema(description = "是否啟用")
+    private Boolean enabled;
+
+    // （可選，未來再開）
+    // private String resourceCode;
 }

@@ -1,5 +1,8 @@
 package com.xk.truck.upms.application;
 
+import com.xk.base.domain.jpa.spec.EnabledSpec;
+import com.xk.base.domain.jpa.spec.KeywordSpec;
+import com.xk.base.domain.jpa.spec.SpecUtils;
 import com.xk.base.exception.BusinessException;
 import com.xk.base.util.XkBeanUtils;
 import com.xk.truck.upms.controller.api.dto.role.*;
@@ -157,7 +160,10 @@ public class UpmsRoleService {
      */
     @Transactional(readOnly = true)
     public Page<UpmsRoleListResp> pageForList(UpmsRoleQuery query, Pageable pageable) {
-        Specification<UpmsRole> spec = buildRoleSpec(query);
+        Specification<UpmsRole> spec = null;
+
+        spec = SpecUtils.and(spec, KeywordSpec.codeOrName(query.getKeyword()));
+        spec = SpecUtils.and(spec, EnabledSpec.eq(query.getEnabled()));
 
         return roleRepository.findAll(spec, pageable)
                 .map(role -> {
@@ -176,45 +182,6 @@ public class UpmsRoleService {
                     dto.setUpdatedAt(role.getUpdatedTime());
                     return dto;
                 });
-    }
-
-    /**
-     * Specification：動態查詢條件
-     * <p>
-     * 支援（依你 UpmsRoleQuery 欄位）：
-     * - code like
-     * - name like
-     * - enabled equal
-     * <p>
-     * ⚠ 排雷：
-     * - like 查詢使用 lower() 讓大小寫不敏感
-     * - code 查詢通常用 normalize 後再 like 或 equal
-     */
-    private Specification<UpmsRole> buildRoleSpec(UpmsRoleQuery query) {
-        return (root, cq, cb) -> {
-            if (query == null) return cb.conjunction();
-
-            List<Predicate> predicates = new ArrayList<>();
-
-            if (StringUtils.hasText(query.getCode())) {
-                String keyword = normalizeRoleCode(query.getCode());
-                predicates.add(
-                        cb.like(cb.upper(root.get("code")), "%" + keyword + "%")
-                );
-            }
-
-            if (StringUtils.hasText(query.getName())) {
-                predicates.add(
-                        cb.like(cb.lower(root.get("name")), "%" + query.getName().toLowerCase() + "%")
-                );
-            }
-
-            if (query.getEnabled() != null) {
-                predicates.add(cb.equal(root.get("enabled"), query.getEnabled()));
-            }
-
-            return cb.and(predicates.toArray(new Predicate[0]));
-        };
     }
 
     /**

@@ -1,5 +1,8 @@
 package com.xk.truck.upms.application;
 
+import com.xk.base.domain.jpa.spec.EnabledSpec;
+import com.xk.base.domain.jpa.spec.KeywordSpec;
+import com.xk.base.domain.jpa.spec.SpecUtils;
 import com.xk.base.exception.BusinessException;
 import com.xk.base.util.XkBeanUtils;
 import com.xk.truck.upms.controller.api.dto.system.UpmsSystemCreateReq;
@@ -10,7 +13,6 @@ import com.xk.truck.upms.controller.api.dto.system.UpmsSystemUpdateReq;
 import com.xk.truck.upms.domain.model.UpmsSystem;
 import com.xk.truck.upms.domain.repository.UpmsSystemRepository;
 
-import jakarta.persistence.criteria.Predicate;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -73,9 +75,9 @@ public class UpmsSystemService {
     // Error Code / Message（集中管理，避免到處打錯）
     // ===============================================================
     private static final String ERR_SYSTEM_NOT_FOUND = "UPMS_SYSTEM_NOT_FOUND";
-    private static final String ERR_SYSTEM_EXISTS = "UPMS_SYSTEM_EXISTS";
-
     private static final String MSG_SYSTEM_NOT_FOUND = "找不到系統";
+
+    private static final String ERR_SYSTEM_EXISTS = "UPMS_SYSTEM_EXISTS";
     private static final String MSG_SYSTEM_EXISTS = "系統代碼已存在";
 
     // ===============================================================
@@ -139,7 +141,11 @@ public class UpmsSystemService {
     @Transactional(readOnly = true)
     public UpmsSystemResp findById(UUID id) {
         UpmsSystem system = loadSystemOrThrow(id);
-        return XkBeanUtils.copyProperties(system, UpmsSystemResp::new);
+
+        UpmsSystemResp resp = XkBeanUtils.copyProperties(system, UpmsSystemResp::new);
+        resp.setId(system.getUuid());
+
+        return resp;
     }
 
     @Transactional(readOnly = true)
@@ -157,54 +163,17 @@ public class UpmsSystemService {
      */
     @Transactional(readOnly = true)
     public Page<UpmsSystemListResp> pageForList(UpmsSystemQuery query, Pageable pageable) {
-        Specification<UpmsSystem> spec = buildSystemSpec(query);
+        Specification<UpmsSystem> spec = null;
+
+        spec = SpecUtils.and(spec, KeywordSpec.codeOrName(query.getKeyword()));
+        spec = SpecUtils.and(spec, EnabledSpec.eq(query.getEnabled()));
 
         return systemRepository.findAll(spec, pageable)
                 .map(system -> {
-                    UpmsSystemListResp dto = new UpmsSystemListResp();
+                    UpmsSystemListResp dto = XkBeanUtils.copyProperties(system, UpmsSystemListResp::new);
                     dto.setId(system.getUuid());
-                    dto.setCode(system.getCode());
-                    dto.setName(system.getName());
-                    dto.setEnabled(system.getEnabled());
-                    dto.setSortOrder(system.getSortOrder());
-                    dto.setRemark(system.getRemark());
-                    dto.setCreatedTime(system.getCreatedTime());
-                    dto.setUpdatedTime(system.getUpdatedTime());
                     return dto;
                 });
-    }
-
-    /**
-     * 動態組合查詢條件（Specification）
-     * <p>
-     * 建議對齊 Query 欄位：
-     * - keyword：模糊查 code / name
-     * - enabled：狀態
-     */
-    private Specification<UpmsSystem> buildSystemSpec(UpmsSystemQuery query) {
-        return (root, cq, cb) -> {
-            if (query == null) return cb.conjunction();
-
-            List<Predicate> predicates = new ArrayList<>();
-
-            // keyword：like code or name
-            if (StringUtils.hasText(query.getKeyword())) {
-                String kw = "%" + query.getKeyword().trim().toLowerCase() + "%";
-                predicates.add(
-                        cb.or(
-                                cb.like(cb.lower(root.get("code")), kw),
-                                cb.like(cb.lower(root.get("name")), kw)
-                        )
-                );
-            }
-
-            // enabled
-            if (query.getEnabled() != null) {
-                predicates.add(cb.equal(root.get("enabled"), query.getEnabled()));
-            }
-
-            return cb.and(predicates.toArray(new Predicate[0]));
-        };
     }
 
     // ===============================================================

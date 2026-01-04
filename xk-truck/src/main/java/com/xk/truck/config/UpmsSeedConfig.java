@@ -60,36 +60,30 @@ public class UpmsSeedConfig {
             log.info("[UPMS] 種子初始化開始...");
 
             // 1) Permissions
-            seedPermission("UPMS", "UPMS_USER", "使用者管理", "車隊平台用戶資料管理");
-            seedPermission("UPMS", "UPMS_USER_VIEW", "使用者管理V", "");
-            seedPermission("UPMS", "UPMS_USER_CREATE", "使用者管理C", "");
-            seedPermission("UPMS", "UPMS_USER_UPDATE", "使用者管理U", "");
-            seedPermission("UPMS", "UPMS_USER_DELETE", "使用者管理D", "");
-            seedPermission("UPMS", "UPMS_USER_RESET_PWD", "使用者管理R", "");
-            seedPermission("UPMS", "UPMS_USER_ENABLE", "使用者管理E", "");
-            seedPermission("UPMS", "UPMS_ROLE", "角色管理", "可維護角色與權限");
-            seedPermission("UPMS", "UPMS_ROLE_VIEW", "角色管理V", "");
-            seedPermission("UPMS", "UPMS_ROLE_CREATE", "角色管理C", "");
-            seedPermission("UPMS", "UPMS_ROLE_UPDATE", "角色管理U", "");
-            seedPermission("UPMS", "UPMS_ROLE_DELETE", "角色管理D", "");
-            seedPermission("UPMS", "UPMS_ROLE_ASSIGN_PERM", "角色管理A", "");
-            seedPermission("FMS", "FMS_TRUCK", "車輛資料", "車輛資料");
-            seedPermission("FMS", "FMS_TRUCK_VIEW", "車輛資料V", "");
-            seedPermission("FMS", "FMS_TRUCK_CREATE", "車輛資料C", "");
-            seedPermission("FMS", "FMS_TRUCK_UPDATE", "車輛資料U", "");
-            seedPermission("FMS", "FMS_TRUCK_DELETE", "車輛資料D", "");
-            seedPermission("FMS", "FMS_DRIVER", "司機列表", "司機列表");
-            seedPermission("FMS", "FMS_DRIVER_VIEW", "司機列表V", "");
-            seedPermission("FMS", "FMS_DRIVER_CREATE", "司機列表C", "");
-            seedPermission("FMS", "FMS_DRIVER_UPDATE", "司機列表U", "");
-            seedPermission("FMS", "FMS_DRIVER_DELETE", "司機列表D", "");
-            seedPermission("TOM", "TOM_ORDER", "訂單資料", "訂單資料");
-            seedPermission("TOM", "TOM_ORDER_VIEW", "訂單資料V", "");
-            seedPermission("TOM", "TOM_ORDER_CREATE", "訂單資料C", "");
-            seedPermission("TOM", "TOM_ORDER_UPDATE", "訂單資料U", "");
-            seedPermission("TOM", "TOM_ORDER_DELETE", "訂單資料D", "");
-            seedPermission("TOM", "TOM_ORDER_ASSIGN", "訂單資料A", "");
-            seedPermission("TOM", "TOM_ORDER_STATUS", "訂單資料S", "");
+            seedPermission("UPMS", "USER", "VIEW",   "使用者-查詢", "");
+            seedPermission("UPMS", "USER", "CREATE", "使用者-新增", "");
+            seedPermission("UPMS", "USER", "UPDATE", "使用者-修改", "");
+            seedPermission("UPMS", "USER", "DELETE", "使用者-刪除", "");
+            seedPermission("UPMS", "USER", "RESET_PWD", "使用者-重設密碼", "");
+            seedPermission("UPMS", "USER", "ENABLE", "使用者-啟停用", "");
+
+            seedPermission("UPMS", "ROLE", "VIEW",   "角色-查詢", "");
+            seedPermission("UPMS", "ROLE", "CREATE", "角色-新增", "");
+            seedPermission("UPMS", "ROLE", "UPDATE", "角色-修改", "");
+            seedPermission("UPMS", "ROLE", "DELETE", "角色-刪除", "");
+            seedPermission("UPMS", "ROLE", "ASSIGN_PERM", "角色-指派權限", "");
+
+            seedPermission("FMS", "TRUCK", "VIEW",   "車輛-查詢", "");
+            seedPermission("FMS", "TRUCK", "CREATE", "車輛-新增", "");
+            seedPermission("FMS", "TRUCK", "UPDATE", "車輛-修改", "");
+            seedPermission("FMS", "TRUCK", "DELETE", "車輛-刪除", "");
+
+            seedPermission("TOM", "ORDER", "VIEW",   "訂單-查詢", "");
+            seedPermission("TOM", "ORDER", "CREATE", "訂單-新增", "");
+            seedPermission("TOM", "ORDER", "UPDATE", "訂單-修改", "");
+            seedPermission("TOM", "ORDER", "DELETE", "訂單-刪除", "");
+            seedPermission("TOM", "ORDER", "ASSIGN", "訂單-派遣", "");
+            seedPermission("TOM", "ORDER", "STATUS", "訂單-狀態異動", "");
 
             // 2) Roles
             seedRole("SYS_ADMIN", "系統管理員", "全開、最高權限");
@@ -124,19 +118,27 @@ public class UpmsSeedConfig {
         };
     }
 
-    private void seedPermission(String systemCode, String code, String name, String desc) {
+    private void seedPermission(
+            String systemCode, String resourceCode, String actionCode, String name, String desc) {
+        // code 由 entity 組合
+        String code = systemCode + "_" + resourceCode + "_" + actionCode;
+
         if (permissionService.existsByCode(code)) {
-            log.info("权限已存在：{}", code);
+            log.info("Permission 已存在：{}", code);
             return;
         }
+
         var req = new UpmsPermissionCreateReq();
         req.setSystemCode(systemCode);
-        req.setCode(code);
+        req.setResourceCode(resourceCode);
+        req.setActionCode(actionCode);
         req.setName(name);
         req.setDescription(desc);
+
         permissionService.create(req);
         log.info("建立 Permission：{}", code);
     }
+
 
     private void seedRole(String code, String name, String desc) {
         if (roleService.existsByCode(code)) {

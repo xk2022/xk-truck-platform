@@ -48,8 +48,7 @@ import java.util.*;
  */
 @Repository
 public interface UpmsPermissionRepository
-        extends JpaRepository<UpmsPermission, UUID>,
-        JpaSpecificationExecutor<UpmsPermission> {
+        extends JpaRepository<UpmsPermission, UUID>, JpaSpecificationExecutor<UpmsPermission> {
 
     // ===============================================================
     // 1️⃣ Basic lookups（最安全、最常用）
@@ -170,6 +169,8 @@ public interface UpmsPermissionRepository
             @QueryHint(name = HibernateHints.HINT_READ_ONLY, value = "true")
     })
     Page<UpmsPermission> findAll(Pageable pageable);
+
+    boolean existsBySystemCodeAndResourceCodeAndActionCode(String systemCode, String resourceCode, String actionCode);
 
     // ===============================================================
     // 4️⃣ DTO / Projection Query（最穩的列表頁）
@@ -387,4 +388,7 @@ public interface UpmsPermissionRepository
         where p.code in :codes
     """)
     List<UUID> findUuidsByCodes(@Param("codes") Collection<String> codes);
+
+
+    boolean existsByCodeAndDeletedAtIsNull(String code);
 }

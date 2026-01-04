@@ -25,9 +25,7 @@ import java.util.UUID;
  * Controller Class : UpmsPermissionController
  * Layer            : Controller (API)
  * Purpose          : 提供權限管理 API（建立/查詢/分頁/啟用停用/更新/刪除）
- * Notes            :
- * - 回傳 ApiResult，統一回應格式
- * <p>
+ * ===============================================================
  * Controller 設計原則（對齊 Service 風格）
  * 1) Controller 不做業務邏輯：不做 exists 檢查、不做 normalize、不操作關聯
  * 2) 例外與規則統一由 Service 處理（BusinessException）
@@ -49,10 +47,6 @@ public class UpmsPermissionController {
     // Create
     // ===============================================================
 
-    /**
-     * 建立權限
-     * POST /api/upms/permissions
-     */
     @Operation(summary = "建立權限")
     @PostMapping
     public ApiResult<UpmsPermissionResp> create(@Valid @RequestBody UpmsPermissionCreateReq req) {
@@ -63,23 +57,12 @@ public class UpmsPermissionController {
     // Read
     // ===============================================================
 
-    /**
-     * 取得單一權限（依 UUID）
-     * GET /api/upms/permissions/{id}
-     */
     @Operation(summary = "取得單一權限（依 UUID）", description = "依 UUID 查詢指定權限")
     @GetMapping("/{id}")
     public ApiResult<UpmsPermissionResp> findById(@PathVariable("id") UUID id) {
         return ApiResult.success(permissionService.findById(id));
     }
 
-    /**
-     * 權限列表分頁查詢
-     * GET /api/upms/permissions
-     * <p>
-     * query 來源：request params 綁定到 UpmsPermissionQuery
-     * pageable 來源：?page=0&size=20&sort=createdTime,desc
-     */
     @Operation(summary = "查詢權限列表（支援分頁 + 條件查詢）")
     @GetMapping
     public ApiResult<Page<UpmsPermissionListResp>> pageForList(
@@ -103,7 +86,7 @@ public class UpmsPermissionController {
             @PathVariable("id") UUID id,
             @Valid @RequestBody UpmsPermissionUpdateReq req
     ) {
-        return ApiResult.success(permissionService.updateBasic(id, req));
+        return ApiResult.success(permissionService.update(id, req));
     }
 
     // ===============================================================
@@ -114,15 +97,15 @@ public class UpmsPermissionController {
      * 啟用 / 停用
      * PATCH /api/upms/permissions/{id}/enabled?enabled=true|false
      */
-    @Operation(summary = "啟用或停用權限", description = "切換權限啟用狀態")
-    @PatchMapping("/{id}/enabled")
-    public ApiResult<Void> updateEnabled(
-            @PathVariable("id") UUID id,
-            @RequestParam("enabled") boolean enabled
-    ) {
-        permissionService.updateEnabled(id, enabled);
-        return ApiResult.success();
-    }
+//    @Operation(summary = "啟用或停用權限", description = "切換權限啟用狀態")
+//    @PatchMapping("/{id}/enabled")
+//    public ApiResult<Void> updateEnabled(
+//            @PathVariable("id") UUID id,
+//            @RequestParam("enabled") boolean enabled
+//    ) {
+//        permissionService.updateEnabled(id, enabled);
+//        return ApiResult.success();
+//    }
 
     // ===============================================================
     // Delete

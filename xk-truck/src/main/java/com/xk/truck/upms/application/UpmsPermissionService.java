@@ -7,7 +7,7 @@ import com.xk.truck.upms.domain.model.UpmsPermission;
 
 import com.xk.truck.upms.domain.repository.UpmsPermissionRepository;
 
-import jakarta.persistence.criteria.JoinType;
+import jakarta.persistence.criteria.Predicate;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -18,7 +18,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.*;
 
 /**
@@ -54,10 +54,14 @@ public class UpmsPermissionService {
     // ===============================================================
     // Error Code / Message（集中管理，避免到處打錯）
     // ===============================================================
+    private static final String ERR_PERMISSION_REQ_EMPTY = "UPMS_PERMISSION_REQ_EMPTY";
+    private static final String MSG_PERMISSION_REQ_EMPTY = "請求不得為空";
+
     private static final String ERR_PERMISSION_NOT_FOUND = "UPMS_PERMISSION_NOT_FOUND";
+    private static final String MSG_PERMISSION_NOT_FOUND = "找不到指定權限";
+
     private static final String ERR_PERMISSION_EXISTS = "UPMS_PERMISSION_EXISTS";
-    private static final String MSG_PERMISSION_NOT_FOUND = "找不到權限";
-    private static final String MSG_PERMISSION_EXISTS = "權限代碼已存在";
+    private static final String MSG_PERMISSION_EXISTS = "權限已存在";
 
     // ===============================================================
     // Repository / Collaborators
@@ -69,66 +73,65 @@ public class UpmsPermissionService {
     // ===============================================================
 
     /**
-     * 建立權限
+     * 建立權限（平台級）
      * <p>
      * 流程：
-     * 1) 防呆 + normalize code
-     * 2) 檢查 code 唯一（Service 層體驗，DB unique constraint 才是最後防線）
-     * 3) 建立 entity（白名單欄位）
-     * 4) save
+     * 1) 驗證請求
+     * 2) 檢查 (system + resource + action) 唯一性
+     * 3) 透過 Domain Factory 建立 Permission
+     * 4) 補充可變欄位（白名單）
+     * 5) save
      */
+    @Transactional
     public UpmsPermissionResp create(UpmsPermissionCreateReq req) {
         if (req == null) {
-            throw new BusinessException("UPMS_PERMISSION_REQ_EMPTY", "建立權限請求不得為空");
+            throw new BusinessException(ERR_PERMISSION_REQ_EMPTY, "建立權限" + MSG_PERMISSION_REQ_EMPTY);
         }
 
-        final String normalizedCode = normalizeCode(req.getCode());
-        if (!StringUtils.hasText(normalizedCode)) {
-            throw new BusinessException("UPMS_PERMISSION_CODE_EMPTY", "權限代碼不能為空");
-        }
+        final String systemCode = UpmsPermission.normalizeCode(req.getSystemCode());
+        final String resourceCode = UpmsPermission.normalizeCode(req.getResourceCode());
+        final String actionCode = UpmsPermission.normalizeCode(req.getActionCode());
 
-        log.info("📌 [UpmsPermissionService] 建立權限: {}", normalizedCode);
+        log.info("📌 [UpmsPermissionService] 建立權限: {}_{}_{}", systemCode, resourceCode, actionCode);
 
-        if (permissionRepository.existsByCode(normalizedCode)) {
+        // 語意唯一性檢查：system + resource + action（DB unique constraint 是最後防線）
+        if (permissionRepository.existsBySystemCodeAndResourceCodeAndActionCode(systemCode, resourceCode, actionCode)) {
             throw new BusinessException(ERR_PERMISSION_EXISTS, MSG_PERMISSION_EXISTS);
         }
 
-        UpmsPermission permission = new UpmsPermission();
-        XkBeanUtils.copyNonNullProperties(req, permission);
+        // Domain Factory（唯一允許產生 code 的地方）
+        UpmsPermission permission = UpmsPermission.create(
+                systemCode,
+                resourceCode,
+                actionCode,
+                req.getName()
+        );
 
-        // 覆蓋：code 一律以 normalize 後寫入
-        permission.setCode(normalizedCode);
+        // 白名單可變欄位
+        permission.setDescription(req.getDescription());
+        permission.setEnabled(req.getEnabled() != null ? req.getEnabled() : Boolean.TRUE);
+        permission.setSortOrder(req.getSortOrder() != null ? req.getSortOrder() : 0);
 
-        // 預設 enabled（若你的 entity 已預設 true，這段只是保險）
-        if (permission.getEnabled() == null) {
-            permission.setEnabled(true);
+        // UI helper（若你的 entity create() 已經設定 groupKey，可移除）
+        if (!StringUtils.hasText(permission.getGroupKey())) {
+            permission.setGroupKey(systemCode + "_" + resourceCode);
         }
 
         UpmsPermission saved = permissionRepository.save(permission);
-        log.info("✅ [UpmsPermissionService] 權限建立完成: {} ({})", saved.getCode(), saved.getUuid());
 
+        log.info("[UpmsPermissionService] 權限建立完成: {} ({})", saved.getCode(), saved.getUuid());
         return XkBeanUtils.copyProperties(saved, UpmsPermissionResp::new);
     }
 
     // ===============================================================
-    // Read - Basic
+    // Read
     // ===============================================================
 
     @Transactional(readOnly = true)
     public UpmsPermissionResp findById(UUID id) {
-        UpmsPermission p = loadPermissionOrThrow(id);
+        UpmsPermission p = loadOrThrow(id);
         return XkBeanUtils.copyProperties(p, UpmsPermissionResp::new);
     }
-
-    @Transactional(readOnly = true)
-    public UpmsPermissionResp findByCode(String code) {
-        UpmsPermission p = loadPermissionByCodeOrThrow(code);
-        return XkBeanUtils.copyProperties(p, UpmsPermissionResp::new);
-    }
-
-    // ===============================================================
-    // Read - Page/List
-    // ===============================================================
 
     /**
      * 後台列表分頁
@@ -144,81 +147,10 @@ public class UpmsPermissionService {
 
         return permissionRepository.findAll(spec, pageable)
                 .map(p -> {
-                    UpmsPermissionListResp dto = new UpmsPermissionListResp();
+                    UpmsPermissionListResp dto = XkBeanUtils.copyProperties(p, UpmsPermissionListResp::new);
                     dto.setId(p.getUuid());
-                    dto.setCode(p.getCode());
-                    dto.setName(p.getName());
-                    dto.setEnabled(p.getEnabled());
-                    dto.setSortOrder(p.getSortOrder());   // 若沒有 sortOrder 欄位，可刪除此行
-
-                    // systemCode 可能需要從關聯取（看你 entity）
-                    // 若 UpmsPermission 有 systemCode 欄位：dto.setSystemCode(p.getSystemCode());
-                    // 若 UpmsPermission 有 UpmsSystem system：dto.setSystemCode(p.getSystem().getCode());
-                    dto.setSystemCode(extractSystemCodeSafely(p));
-
-                    dto.setRemark(p.getRemark());
-                    dto.setCreatedTime(p.getCreatedTime());
-                    dto.setUpdatedTime(p.getUpdatedTime());
                     return dto;
                 });
-    }
-
-    /**
-     * 動態組合 Permission 查詢條件（Specification）
-     * <p>
-     * 規則（可依你的 query DTO 調整）：
-     * - keyword：對 code/name like（lower + %keyword%）
-     * - enabled：equal
-     * - systemCode：若 entity 有 systemCode 欄位 -> equal；
-     * 若是關聯 system -> join system
-     * - type：equal（若你有）
-     * <p>
-     * ⚠ join 地雷：
-     * - join 後要 cq.distinct(true) 避免重複 row
-     * - count query 複雜化（資料量大可考慮 DTO query 或子查詢）
-     */
-    private Specification<UpmsPermission> buildPermissionSpec(UpmsPermissionQuery query) {
-        return (root, cq, cb) -> {
-            if (query == null) return cb.conjunction();
-
-            List<jakarta.persistence.criteria.Predicate> predicates = new ArrayList<>();
-
-            // keyword (code/name)
-            if (StringUtils.hasText(query.getKeyword())) {
-                String kw = query.getKeyword().trim().toLowerCase(Locale.ROOT);
-                predicates.add(
-                        cb.or(
-                                cb.like(cb.lower(root.get("code")), "%" + kw + "%"),
-                                cb.like(cb.lower(root.get("name")), "%" + kw + "%")
-                        )
-                );
-            }
-
-            // enabled
-            if (query.getEnabled() != null) {
-                predicates.add(cb.equal(root.get("enabled"), query.getEnabled()));
-            }
-
-            // type（若你沒有 type 欄位，刪掉這段即可）
-            if (StringUtils.hasText(query.getType())) {
-                predicates.add(cb.equal(root.get("type"), query.getType().trim()));
-            }
-
-            // systemCode：兩種寫法，擇一（看你的 entity）
-            if (StringUtils.hasText(query.getSystemCode())) {
-                String sc = normalizeCode(query.getSystemCode());
-
-                // A) 若 UpmsPermission 內是扁平欄位：private String systemCode;
-                // predicates.add(cb.equal(cb.upper(root.get("systemCode")), sc));
-
-                // B) 若 UpmsPermission 內是關聯：private UpmsSystem system;
-                var systemJoin = root.join("system", JoinType.LEFT);
-                predicates.add(cb.equal(cb.upper(systemJoin.get("code")), sc));
-                cq.distinct(true);
-            }
-
-            return cb.and(predicates.toArray(new jakarta.persistence.criteria.Predicate[0]));
-        };
     }
 
     // ===============================================================
@@ -232,78 +164,95 @@ public class UpmsPermissionService {
      * - code 視為 immutable（強烈建議），避免關聯表/外部引用全壞
      * - 若你真的要改 code，請做專門的 renameCode()，並在 DB/外部系統同步
      */
-    public UpmsPermissionResp updateBasic(UUID id, UpmsPermissionUpdateReq req) {
+    @Transactional
+    public UpmsPermissionResp update(UUID id, UpmsPermissionUpdateReq req) {
         if (req == null) {
-            throw new BusinessException("UPMS_PERMISSION_UPDATE_REQ_EMPTY", "更新資料請求不得為空");
+            throw new BusinessException(ERR_PERMISSION_REQ_EMPTY, "更新權限" + MSG_PERMISSION_REQ_EMPTY);
         }
 
-        UpmsPermission p = loadPermissionOrThrow(id);
+        UpmsPermission permission = loadOrThrow(id);
 
-        // ⚠ 防護：不允許更新 code（若你 DTO 有 code 欄位，這裡要忽略/擋掉）
-        if (StringUtils.hasText(req.getCode())) {
-            throw new BusinessException("UPMS_PERMISSION_CODE_IMMUTABLE", "權限代碼不允許修改");
-        }
+        // 白名單欄位：允許 partial update（null = 不改）
+//        if (StringUtils.hasText(req.getName())) {
+//            permission.setName(req.getName().trim());
+//        }
+//        if (req.getDescription() != null) {
+//            permission.setDescription(req.getDescription());
+//        }
+//        if (req.getEnabled() != null) {
+//            permission.setEnabled(req.getEnabled());
+//        }
+//        if (req.getSortOrder() != null) {
+//            permission.setSortOrder(req.getSortOrder());
+//        }
+        XkBeanUtils.copyNonNullProperties(req, permission);
 
-        XkBeanUtils.copyNonNullProperties(req, p);
+        UpmsPermission saved = permissionRepository.save(permission);
+        log.info("[UpmsPermissionService] 權限更新完成: {} ({})", saved.getCode(), saved.getUuid());
 
-        // dirty checking 會在 transaction commit 自動 flush
-        log.info("✏️ [UpmsPermissionService] 權限更新完成: {} ({})", p.getCode(), p.getUuid());
-        return XkBeanUtils.copyProperties(p, UpmsPermissionResp::new);
+        return XkBeanUtils.copyProperties(saved, UpmsPermissionResp::new);
     }
 
-    // ===============================================================
-    // Status / Ops
-    // ===============================================================
-
-    /**
-     * 啟用 / 停用
-     * <p>
-     * 說明：
-     * - 使用 managed entity + dirty checking
-     * - 若你想避免 session 依賴，可改呼叫 repository.updateEnabled(...)
-     */
-    public void updateEnabled(UUID id, boolean enabled) {
-        UpmsPermission p = loadPermissionOrThrow(id);
-        p.setEnabled(enabled);
-
-        log.info("🔄 [UpmsPermissionService] 權限狀態更新: {} -> {}", p.getCode(), enabled ? "啟用" : "停用");
-    }
-
-    /**
-     * 更新最後異動時間（範例：你若有類似欄位/需求）
-     * - 這裡示範 bulk update 的寫法，避免拉 entity
-     * - 若你 Repository 沒做 updateUpdatedTime，就不要用這支
-     */
-    public int touchUpdatedTime(UUID id) {
-        if (id == null) {
-            throw new BusinessException("UPMS_PERMISSION_ID_EMPTY", "權限 ID 不得為空");
-        }
-        LocalDateTime now = LocalDateTime.now();
-        // 你需要在 UpmsPermissionRepository 補一個 updateUpdatedTime 才能用
-        // return permissionRepository.updateUpdatedTime(id, now);
-
-        // 先保留示範（避免你沒建 Repository 方法導致 compile error）
-        return 0;
-    }
-
-    // ===============================================================
-    // Delete
-    // ===============================================================
-
-    /**
-     * 刪除權限
-     * <p>
-     * ⚠ 重要：權限通常會被 RolePermission 參照
-     * - 若 DB 有 FK：你需要先刪 role_permission 關聯，再刪 permission
-     * - 建議由 UpmsRolePermissionService 提供 clearByPermissionUuid(permissionUuid)
-     * <p>
-     * 這裡先做「只刪自身」的版本（低耦合），是否清關聯由外層 orchestrator 決定。
-     */
+    // ============================================================
+    // Delete (soft delete)
+    // ============================================================
+    @Transactional
     public void delete(UUID id) {
-        UpmsPermission p = loadPermissionOrThrow(id);
+        UpmsPermission p = loadOrThrow(id);
 
-        permissionRepository.deleteById(id);
+        // idempotent：已刪除就不重複寫（可改成 throw，看你的政策）
+        if (p.getDeletedAt() != null) {
+            log.info("🗑️ [UpmsPermissionService] 權限已是刪除狀態: {} ({})", p.getCode(), p.getUuid());
+            return;
+        }
+
+        p.setDeletedAt(Instant.now());
+        permissionRepository.save(p);
+
         log.info("🗑️ [UpmsPermissionService] 權限已刪除: {} ({})", p.getCode(), p.getUuid());
+    }
+
+    // ============================================================
+    // Specification builder
+    // ============================================================
+    @Transactional(readOnly = true)
+    private Specification<UpmsPermission> buildPermissionSpec(UpmsPermissionQuery query) {
+        return (root, cq, cb) -> {
+            List<Predicate> predicates = new ArrayList<>();
+
+            // 永遠排除軟刪
+            predicates.add(cb.isNull(root.get("deletedAt")));
+
+            if (query == null) {
+                return cb.and(predicates.toArray(new Predicate[0]));
+            }
+
+            // keyword (code/name)
+            String kw = query.getKeyword();
+            if (StringUtils.hasText(kw)) {
+                String like = "%" + kw.trim().toLowerCase(Locale.ROOT) + "%";
+                predicates.add(
+                        cb.or(
+                                cb.like(cb.lower(root.get("code")), like),
+                                cb.like(cb.lower(root.get("name")), like)
+                        )
+                );
+            }
+
+            // enabled
+            if (query.getEnabled() != null) {
+                predicates.add(cb.equal(root.get("enabled"), query.getEnabled()));
+            }
+
+            // systemCode（目前 entity 是扁平欄位，不要 join）
+            String systemCode = query.getSystemCode();
+            if (StringUtils.hasText(systemCode)) {
+                String sc = UpmsPermission.normalizeCode(systemCode);
+                predicates.add(cb.equal(root.get("systemCode"), sc));
+            }
+
+            return cb.and(predicates.toArray(new Predicate[0]));
+        };
     }
 
     // ===============================================================
@@ -320,20 +269,11 @@ public class UpmsPermissionService {
     // Internal Guard / Loader
     // ===============================================================
 
-    private UpmsPermission loadPermissionOrThrow(UUID id) {
+    private UpmsPermission loadOrThrow(UUID id) {
         if (id == null) {
-            throw new BusinessException("UPMS_PERMISSION_ID_EMPTY", "權限 ID 不得為空");
+            throw new BusinessException("UPMS_PERMISSION_ID_EMPTY", "權限 UUID 不得為空");
         }
         return permissionRepository.findById(id)
-                .orElseThrow(() -> new BusinessException(ERR_PERMISSION_NOT_FOUND, MSG_PERMISSION_NOT_FOUND));
-    }
-
-    private UpmsPermission loadPermissionByCodeOrThrow(String code) {
-        String normalized = normalizeCode(code);
-        if (!StringUtils.hasText(normalized)) {
-            throw new BusinessException("UPMS_PERMISSION_CODE_EMPTY", "權限代碼不能為空");
-        }
-        return permissionRepository.findByCode(normalized)
                 .orElseThrow(() -> new BusinessException(ERR_PERMISSION_NOT_FOUND, MSG_PERMISSION_NOT_FOUND));
     }
 
@@ -349,22 +289,5 @@ public class UpmsPermissionService {
     private String normalizeCode(String code) {
         if (!StringUtils.hasText(code)) return null;
         return code.trim().toUpperCase(Locale.ROOT);
-    }
-
-    /**
-     * 安全取得 systemCode（避免因為 mapping 不同而 Service 爆炸）
-     * - 若你 Permission 沒有 system 關聯或 systemCode 欄位，可回 null
-     */
-    private String extractSystemCodeSafely(UpmsPermission p) {
-        try {
-            // 若你是關聯：p.getSystem().getCode()
-            if (p.getSystemCode() != null && StringUtils.hasText(p.getSystemCode())) {
-                return p.getSystemCode();
-            }
-        } catch (Exception ignore) {
-            // 保持 service 穩定（避免 lazy initialization 例外）
-        }
-        // 若你是扁平欄位：return p.getSystemCode();
-        return null;
     }
 }

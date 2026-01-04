@@ -12,7 +12,9 @@ import org.hibernate.annotations.Comment;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.UuidGenerator;
 import org.hibernate.type.SqlTypes;
+import org.springframework.util.StringUtils;
 
+import java.time.Instant;
 import java.util.*;
 
 /**
@@ -75,30 +77,17 @@ public class UpmsPermission extends BaseEntity {
     // Core fields (穩定識別)
     // ===============================================================
     @NotBlank(message = "權限代碼不能為空")
-    @Size(max = 160)
-    @Column(nullable = false, length = 160)
-    @Comment("權限代碼（唯一）例如：FMS_VEHICLE_READ")
+    @Column(nullable = false, updatable = false) // immutable 不可變的
+    @Comment("權限代碼（唯一）例如：TOM_ORDER_READ")
     private String code;
 
-    @NotBlank(message = "權限名稱不能為空")
-    @Size(max = 120)
-    @Column(nullable = false, length = 120)
-    @Comment("權限名稱（顯示用）")
-    private String name;
-
-    @Size(max = 255)
-    @Column(length = 255)
-    @Comment("權限描述")
-    private String description;
-
-    @Column(nullable = false)
-    @Comment("是否啟用（true:啟用, false:停用）")
-    private Boolean enabled = true;
-
     // ===============================================================
-    // System / Module boundary（避免硬耦合到 UpmsSystem entity）
+    // Domain Classification
     // ===============================================================
     /**
+     // ===============================================================
+     // System / Module boundary（避免硬耦合到 UpmsSystem entity）
+     // ===============================================================
      * 低耦合建議：
      * - 先用 systemCode（字串）做邊界歸屬，不硬綁 @ManyToOne UpmsSystem
      * - 好處：避免權限表一堆 join、避免系統表的改動影響授權核心
@@ -110,160 +99,95 @@ public class UpmsPermission extends BaseEntity {
     @Comment("系統代碼（例如：UPMS / FMS / TOM）")
     private String systemCode;
 
-    @Size(max = 80)
-    @Column(name = "module_code", length = 80)
-    @Comment("模組代碼（例如：USER / ROLE / VEHICLE / DRIVER）")
-    private String moduleCode;
-
-    // ===============================================================
-    // Resource / Action hints（可選，利於前端顯示與 CRUD 拆分）
-    // ===============================================================
+    /**
+     // ===============================================================
+     // Resource / Action hints（可選，利於前端顯示與 CRUD 拆分）
+     // ===============================================================
+     */
     @Size(max = 120)
-    @Column(name = "resource", length = 120)
-    @Comment("資源名稱（例如：USER / VEHICLE / ORDER）")
-    private String resource;
+    @Column(name = "resource_code", nullable = false, length = 120)
+    @Comment("資源代碼（例如：USER / ROLE / VEHICLE / DRIVER / ORDER）")
+    private String resourceCode;
 
-    @Size(max = 40)
-    @Column(name = "default_action", length = 40)
-    @Comment("預設動作（例如：READ/CREATE/UPDATE/DELETE）")
-    private String defaultAction;
+    @Size(max = 80)
+    @Column(name = "action_code", nullable = false, length = 40)
+    @Comment("動作代碼（例如：CREATE / READ / UPDATE / DELETE / EXPORT）")
+    private String actionCode;
 
     // ===============================================================
-    // Sort & UI helpers
+    // Display / UI
     // ===============================================================
-    @Column(name = "sort_order")
+
+    @NotBlank(message = "權限名稱不能為空")
+    @Column(nullable = false, length = 200)
+    @Comment("權限名稱（顯示用）例如：訂單-查詢")
+    private String name;
+
+    @Column(length = 500)
+    @Comment("權限描述")
+    private String description;
+
+    @Column(nullable = false)
+    @Comment("是否啟用（true:啟用, false:停用）")
+    private Boolean enabled = true;
+
+    /**
+     // ===============================================================
+     // Sort & UI helpers
+     // ===============================================================
+     */
+    @Column(name = "sort_order", nullable = false)
     @Comment("排序（前端功能樹/列表用）")
-    private Integer sortOrder;
+    private Integer sortOrder = 0;
 
     @Size(max = 120)
     @Column(name = "group_key", length = 120)
-    @Comment("分組 key（例如：FMS_VEHICLE）用於前端樹狀呈現")
+    @Comment("分組 key（例如：TOM_ORDER）用於前端樹狀呈現")
     private String groupKey;
 
     // ===============================================================
-    // Actions（CRUD 細分）
+    // L4-ready
     // ===============================================================
-    /**
-     * ElementCollection = 最低成本的「可擴充 CRUD 子項目」
-     * - 優點：不用多建 entity、schema 簡單、很好查詢/更新
-     * - 缺點：如果 actions 需要更豐富欄位（name/desc/active/sort），就要抽 entity
-     * <p>
-     * 表：upms_permission_action_codes
-     * 欄位：permission_uuid, action_code
-     */
-    @ElementCollection(fetch = FetchType.LAZY)
-    @CollectionTable(
-            name = "upms_permission_action_codes",
-            joinColumns = @JoinColumn(
-                    name = "permission_uuid",
-                    referencedColumnName = "uuid",
-                    foreignKey = @ForeignKey(name = "fk_upms_perm_action_permission_uuid")
-            ),
-            uniqueConstraints = @UniqueConstraint(
-                    name = "uk_upms_perm_action_permission_uuid_action_code",
-                    columnNames = {"permission_uuid", "action_code"}
-            )
-    )
-    @Column(name = "action_code", length = 40, nullable = false)
-    @Comment("權限可用動作代碼（CRUD 等）")
-    private Set<String> actionCodes = new LinkedHashSet<>();
-    // ===============================================================
-    // Constructors (安全建構)
-    // ===============================================================
-    public UpmsPermission(String code, String name, String systemCode) {
-        this.code = normalizeCode(code);
-        this.name = name != null ? name.trim() : null;
-        this.systemCode = normalizeCode(systemCode);
-        this.enabled = true;
-    }
+    @Column(nullable = false)
+    private Long version = 0L;
+
+    @Column
+    private Instant deletedAt;
 
     // ===============================================================
-    // Domain Methods - Normalize
+    // Factory
     // ===============================================================
-    public static String normalizeCode(String code) {
-        return code == null ? null : code.trim().toUpperCase(Locale.ROOT);
+    public static UpmsPermission create(
+            String systemCode,
+            String resourceCode,
+            String actionCode,
+            String name
+    ) {
+        Objects.requireNonNull(systemCode, "systemCode is required");
+        Objects.requireNonNull(resourceCode, "resourceCode is required");
+        Objects.requireNonNull(actionCode, "actionCode is required");
+        Objects.requireNonNull(name, "name is required");
+
+        UpmsPermission p = new UpmsPermission();
+        p.systemCode = norm(systemCode);
+        p.resourceCode = norm(resourceCode);
+        p.actionCode = norm(actionCode);
+        p.code = p.systemCode + "_" + p.resourceCode + "_" + p.actionCode;
+        p.groupKey = p.systemCode + "_" + p.resourceCode;
+        p.name = name.trim();
+        p.enabled = true;
+        p.sortOrder = 0;
+        return p;
     }
 
-    public void changeCode(String newCode) {
-        this.code = normalizeCode(newCode);
+    private static String norm(String v) {
+        return v == null ? null : v.trim().toUpperCase(Locale.ROOT);
     }
 
-    public void changeName(String newName) {
-        this.name = newName != null ? newName.trim() : null;
+    public static String normalizeCode(@NotBlank @Size(max = 80) String code) {
+        if (!StringUtils.hasText(code)) return null;
+        return code.trim().toUpperCase(Locale.ROOT);
     }
 
-    public void changeSystemCode(String newSystemCode) {
-        this.systemCode = normalizeCode(newSystemCode);
-    }
-
-    // ===============================================================
-    // Domain Methods - Actions（避免 Set 地雷：全部走方法）
-    // ===============================================================
-    public void addActionCode(String actionCode) {
-        String c = normalizeCode(actionCode);
-        if (c == null || c.isBlank()) return;
-        if (this.actionCodes == null) this.actionCodes = new LinkedHashSet<>();
-        this.actionCodes.add(c);
-    }
-
-    public void removeActionCode(String actionCode) {
-        if (this.actionCodes == null || this.actionCodes.isEmpty()) return;
-        String c = normalizeCode(actionCode);
-        this.actionCodes.remove(c);
-    }
-
-    /**
-     * 覆蓋式更新 actions（常用：CRUD 全替換）
-     * - LinkedHashSet：保留順序（前端顯示友善）
-     */
-    public void replaceActionCodes(Collection<String> newActionCodes) {
-        LinkedHashSet<String> next = new LinkedHashSet<>();
-        if (newActionCodes != null) {
-            for (String v : newActionCodes) {
-                String c = normalizeCode(v);
-                if (c != null && !c.isBlank()) next.add(c);
-            }
-        }
-        this.actionCodes.clear();
-        this.actionCodes.addAll(next);
-    }
-
-    // ===============================================================
-    // Convenience snapshot（避免外部直接碰集合）
-    // ===============================================================
-    public Set<String> getActionCodesSnapshot() {
-        if (this.actionCodes == null || this.actionCodes.isEmpty()) return Set.of();
-        return Collections.unmodifiableSet(new LinkedHashSet<>(this.actionCodes));
-    }
-
-    // ===============================================================
-    // equals/hashCode (地雷排除)
-    // ===============================================================
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof UpmsPermission)) return false;
-        UpmsPermission other = (UpmsPermission) o;
-        return uuid != null && uuid.equals(other.uuid);
-    }
-
-    @Override
-    public int hashCode() {
-        return 31;
-    }
-
-    // ===============================================================
-    // toString（避免 lazy 遞迴）
-    // ===============================================================
-    @Override
-    public String toString() {
-        return "UpmsPermission{" +
-                "uuid=" + uuid +
-                ", code='" + code + '\'' +
-                ", name='" + name + '\'' +
-                ", systemCode='" + systemCode + '\'' +
-                ", moduleCode='" + moduleCode + '\'' +
-                ", enabled=" + enabled +
-                '}';
-    }
+    // equals / hashCode 只看 uuid（你這點做得完全正確）
 }

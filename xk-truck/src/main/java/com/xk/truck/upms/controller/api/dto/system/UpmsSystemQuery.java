@@ -1,5 +1,8 @@
 package com.xk.truck.upms.controller.api.dto.system;
 
+import com.xk.base.web.dto.query.BaseKeywordQuery;
+
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
 /**
@@ -19,20 +22,8 @@ import lombok.Data;
  * ===============================================================
  */
 @Data
-public class UpmsSystemQuery {
-
-    /**
-     * 關鍵字搜尋
-     * <p>
-     * 使用方式：
-     * - code LIKE %keyword%
-     * - name LIKE %keyword%
-     * <p>
-     * 範例：
-     * - keyword=upms
-     * - keyword=權限
-     */
-    private String keyword;
+@Schema(description = "UPMS 系統查詢條件")
+public class UpmsSystemQuery extends BaseKeywordQuery {
 
     /**
      * 是否啟用

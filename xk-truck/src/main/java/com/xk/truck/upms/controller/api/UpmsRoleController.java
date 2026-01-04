@@ -4,6 +4,8 @@ import com.xk.base.web.ApiResult;
 import com.xk.truck.upms.application.UpmsRoleService;
 import com.xk.truck.upms.controller.api.dto.role.*;
 
+import com.xk.truck.upms.controller.api.dto.system.UpmsSystemQuery;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -13,6 +15,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
@@ -73,8 +76,8 @@ public class UpmsRoleController {
     @Operation(summary = "查詢角色列表（支援分頁 + 條件查詢）")
     @GetMapping
     public ApiResult<Page<UpmsRoleListResp>> pageForList(
-            UpmsRoleQuery query,
-            @PageableDefault(size = 20) Pageable pageable
+            @ParameterObject @ModelAttribute UpmsRoleQuery query,
+            @ParameterObject @PageableDefault(size = 20, sort = "createdTime") Pageable pageable
     ) {
         return ApiResult.success(roleService.pageForList(query, pageable));
     }

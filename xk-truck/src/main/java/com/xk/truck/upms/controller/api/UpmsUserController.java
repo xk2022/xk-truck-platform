@@ -25,10 +25,7 @@ import java.util.UUID;
  * Controller Class : UpmsUserController
  * Layer            : Controller (API)
  * Purpose          : 提供使用者管理 API (CRUD、啟用停用、重設密碼、角色指派)
- * Notes            :
- * - 回傳 ApiResult，統一回應格式
- * - 目前回傳 Entity（MVP）；未來可替換為 DTO
- * <p>
+ * ===============================================================
  * Controller 設計原則（對齊 Service 風格）
  * 1) Controller 不做業務邏輯：不 encode 密碼、不做 exists 檢查、不操作關聯
  * 2) 例外與規則統一由 Service 處理（BusinessException）
@@ -60,10 +57,6 @@ public class UpmsUserController {
     // Read
     // ===============================================================
 
-    /**
-     * 依 UUID 查詢
-     * GET /api/upms/users/{id}
-     */
     @Operation(summary = "取得單一使用者（依 UUID）", description = "依 UUID 查詢指定使用者")
     @GetMapping("/{id}")
     public ApiResult<UpmsUserResp> findById(@PathVariable("id") UUID id) {
@@ -83,21 +76,13 @@ public class UpmsUserController {
         return ApiResult.success(userService.findByUsername(username));
     }
 
-    /**
-     * 後台列表分頁查詢
-     * GET /api/upms/users
-     * <p>
-     * query 來源：request params（Spring 會自動綁定到 UpmsUserQuery）
-     * pageable 來源：?page=0&size=20&sort=username,asc
-     */
     @Operation(summary = "查詢使用者列表（支援分頁 + 條件查詢）")
     @GetMapping
     public ApiResult<Page<UpmsUserListResp>> pageForList(
             @ParameterObject @ModelAttribute UpmsUserQuery query,
             @ParameterObject @PageableDefault(size = 20, sort = "createdTime") Pageable pageable
     ) {
-        Page<UpmsUserListResp> result = userService.pageForList(query, pageable);
-        return ApiResult.success(result);
+        return ApiResult.success(userService.pageForList(query, pageable));
     }
 
     // ===============================================================
