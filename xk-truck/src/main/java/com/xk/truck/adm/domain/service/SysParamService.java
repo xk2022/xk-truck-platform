@@ -1,7 +1,7 @@
 package com.xk.truck.adm.domain.service;
 
 import com.xk.truck.adm.domain.model.SysParam;
-import com.xk.truck.adm.domain.repo.SysParamRepository;
+import com.xk.truck.adm.domain.repository.SysParamRepository;
 
 import lombok.RequiredArgsConstructor;
 

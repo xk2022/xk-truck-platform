@@ -234,16 +234,14 @@ public class UpmsUserRoleService {
             List<UpmsUserRole> links = new ArrayList<>(toAdd.size());
             for (UUID roleUuid : toAdd) {
                 UpmsRole role = roleMap.get(roleUuid);
-                UpmsUserRole link = new UpmsUserRole();
-                link.setUser(user);
-                link.setRole(role);
+                UpmsUserRole link = new UpmsUserRole(user, role);
                 // link.setEffectiveFrom(LocalDateTime.now()); // 若你想預設生效時間
                 links.add(link);
             }
 
             userRoleRepository.saveAll(links);
             log.info(
-                    "✅ [UpmsUserRoleService] replaceRoles add: user={}({}), added={}",
+                    "[UpmsUserRoleService] replaceRoles add: user={}({}), added={}",
                     user.getUsername(), user.getUuid(), links.size()
             );
         }

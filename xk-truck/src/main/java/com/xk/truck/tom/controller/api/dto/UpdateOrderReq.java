@@ -1,1 +1,0 @@
-package com.xk.truck.tom.controller.api.dto;public class UpdateOrderReq {}

@@ -1,0 +1,1 @@
+package com.xk.truck.tom.controller.api.dto.req;public class TomOrderQuery {}

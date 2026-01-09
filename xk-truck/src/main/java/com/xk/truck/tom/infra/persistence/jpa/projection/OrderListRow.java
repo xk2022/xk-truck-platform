@@ -1,1 +1,0 @@
-package com.xk.truck.tom.infra.persistence.jpa.projection;public class OrderListRow {}

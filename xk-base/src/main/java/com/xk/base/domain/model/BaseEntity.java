@@ -2,7 +2,10 @@ package com.xk.base.domain.model;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.*;
-import lombok.Data;
+
+import lombok.Getter;
+
+import lombok.Setter;
 
 import org.hibernate.annotations.Comment;
 import org.hibernate.annotations.CreationTimestamp;
@@ -32,7 +35,8 @@ import java.time.ZonedDateTime;
  * }
  * </pre>
  */
-@Data
+@Getter
+@Setter
 @MappedSuperclass
 @EntityListeners(AuditingEntityListener.class)
 public abstract class BaseEntity implements Serializable {
