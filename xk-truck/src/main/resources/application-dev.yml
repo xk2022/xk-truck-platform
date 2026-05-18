@@ -27,5 +27,9 @@ spring:
 
 logging:
   level:
+    root: INFO
+    org.springframework.security: DEBUG
+    com.xk.base: DEBUG
+    com.xk.truck: DEBUG
     org.hibernate.SQL: debug
     org.hibernate.orm.jdbc.bind: trace   # 顯示綁定參數(開發期用)

@@ -22,3 +22,18 @@ spring:
 
 management:
   endpoints.web.exposure.include: health,info
+
+logging:
+  level:
+    root: INFO
+
+    # ❌ Security 太吵
+    org.springframework.security: WARN
+
+    # ❌ 內部框架 debug
+    com.xk.base: INFO
+    com.xk.truck: INFO
+
+    # ❌ Hibernate / SQL
+    org.hibernate.SQL: OFF
+    org.hibernate.type.descriptor.sql: OFF

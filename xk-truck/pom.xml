@@ -83,6 +83,22 @@
 
   <build>
     <plugins>
+      <!-- Spring Boot Maven Plugin：打包成可執行的 JAR -->
+      <plugin>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-maven-plugin</artifactId>
+        <configuration>
+          <mainClass>com.xk.App</mainClass>
+        </configuration>
+        <executions>
+          <execution>
+            <goals>
+              <goal>repackage</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+      
       <plugin>
         <artifactId>maven-surefire-plugin</artifactId>
         <version>3.5.2</version>

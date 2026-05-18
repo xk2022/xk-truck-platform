@@ -11,6 +11,7 @@ import com.xk.truck.upms.controller.api.dto.role.UpmsRoleResp;
 import com.xk.truck.upms.controller.api.dto.user.UpmsUserCreateReq;
 
 import com.xk.truck.upms.controller.api.dto.user.UpmsUserResp;
+import com.xk.truck.upms.controller.api.dto.system.UpmsSystemCreateReq;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -32,7 +33,7 @@ import java.util.List;
  * ===============================================================
  * <p>
  * 功能說明：
- * - 初始化預設權限 → 初始化角色 → 初始化使用者
+ * - 初始化系統 → 初始化預設權限 → 初始化角色 → 初始化使用者
  * - 僅在 application.yml 中設定 upms.seed.enabled=true 時執行
  * - 避免重複建立（會檢查是否存在）
  * <p>
@@ -51,6 +52,7 @@ public class UpmsSeedConfig {
     private final UpmsPermissionService permissionService;
     private final UpmsUserRoleService userRoleService;
     private final UpmsRolePermissionService rolePermissionService;
+    private final UpmsSystemService systemService;
 
     @Bean
     @Transactional
@@ -58,6 +60,21 @@ public class UpmsSeedConfig {
     public CommandLineRunner seedUpmsData() {
         return args -> {
             log.info("[UPMS] 種子初始化開始...");
+
+            // 0) Systems (必須先建立系統，權限才能引用)
+            seedSystem("UPMS", "權限管理系統", null, true);
+            seedSystem("ADM", "管理員系統（Admin）", null, true);
+            seedSystem("FMS", "車輛運輸管理", null, true);
+            seedSystem("ORDER", "訂單管理模組", null, false);
+            seedSystem("TOM", "訂單與貨櫃管理", null, true);
+            seedSystem("HRM", "人資管理系統", null, false);
+            seedSystem("CRM", "客戶管理系統", null, true);
+            seedSystem("PORT", "港口運作系統", null, true);
+            seedSystem("BILL", "支付整合系統", null, false);
+            seedSystem("TRK", "路徑紀錄與異常顯示", null, false);
+            seedSystem("AI-DSP", "ＡＩ優化", null, false);
+            seedSystem("DOC", "文件管理系統", null, false);
+            seedSystem("REP", "分析管理系統", null, false);
 
             // 1) Permissions
             seedPermission("UPMS", "USER", "VIEW",   "使用者-查詢", "");
@@ -72,6 +89,16 @@ public class UpmsSeedConfig {
             seedPermission("UPMS", "ROLE", "UPDATE", "角色-修改", "");
             seedPermission("UPMS", "ROLE", "DELETE", "角色-刪除", "");
             seedPermission("UPMS", "ROLE", "ASSIGN_PERM", "角色-指派權限", "");
+
+            seedPermission("UPMS", "PERMISSION", "VIEW",   "權限-查詢", "");
+            seedPermission("UPMS", "PERMISSION", "CREATE", "權限-新增", "");
+            seedPermission("UPMS", "PERMISSION", "UPDATE", "權限-修改", "");
+            seedPermission("UPMS", "PERMISSION", "DELETE", "權限-刪除", "");
+
+            seedPermission("UPMS", "SYSTEM", "VIEW",   "系統-查詢", "");
+            seedPermission("UPMS", "SYSTEM", "CREATE", "系統-新增", "");
+            seedPermission("UPMS", "SYSTEM", "UPDATE", "系統-修改", "");
+            seedPermission("UPMS", "SYSTEM", "DELETE", "系統-刪除", "");
 
             seedPermission("FMS", "TRUCK", "VIEW",   "車輛-查詢", "");
             seedPermission("FMS", "TRUCK", "CREATE", "車輛-新增", "");
@@ -116,6 +143,22 @@ public class UpmsSeedConfig {
             initAdmin();
             log.info("[UPMS] 種子資料初始化完成！");
         };
+    }
+
+    private void seedSystem(String code, String name, String description, Boolean enabled) {
+        if (systemService.existsByCode(code)) {
+            log.info("系統已存在：{}", code);
+            return;
+        }
+
+        var req = new UpmsSystemCreateReq();
+        req.setCode(code);
+        req.setName(name);
+        req.setDescription(description);
+        req.setEnabled(enabled);
+
+        systemService.create(req);
+        log.info("建立系統：{} ({})", code, name);
     }
 
     private void seedPermission(

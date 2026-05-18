@@ -6,6 +6,7 @@ import com.xk.truck.upms.controller.api.dto.profile.UserProfileReq;
 import com.xk.truck.upms.controller.api.dto.profile.UserProfileResp;
 import com.xk.truck.upms.domain.model.UpmsUser;
 import com.xk.truck.upms.domain.model.UpmsUserProfile;
+import com.xk.truck.upms.domain.repository.UpmsRoleRepository;
 import com.xk.truck.upms.domain.repository.UpmsUserRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -48,6 +49,7 @@ public class UpmsUserProfileService {
     // Repository
     // ===============================================================
     private final UpmsUserRepository userRepository;
+    private final UpmsRoleService roleService;
 
     // ===============================================================
     // Read
@@ -140,6 +142,8 @@ public class UpmsUserProfileService {
 
         // Roles / Permissions / Login history：
         // 建議由對應 Service 負責（避免在 ProfileService 內碰太多關聯造成耦合擴散）
+        UserProfileResp.RoleResp pr = new UserProfileResp.RoleResp();
+
 
         return resp;
     }

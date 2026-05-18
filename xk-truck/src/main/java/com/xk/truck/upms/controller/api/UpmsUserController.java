@@ -14,6 +14,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -80,7 +81,7 @@ public class UpmsUserController {
     @GetMapping
     public ApiResult<Page<UpmsUserListResp>> pageForList(
             @ParameterObject @ModelAttribute UpmsUserQuery query,
-            @ParameterObject @PageableDefault(size = 20, sort = "createdTime") Pageable pageable
+            @ParameterObject @PageableDefault(sort = "createdTime", direction = Sort.Direction.DESC) Pageable pageable
     ) {
         return ApiResult.success(userService.pageForList(query, pageable));
     }

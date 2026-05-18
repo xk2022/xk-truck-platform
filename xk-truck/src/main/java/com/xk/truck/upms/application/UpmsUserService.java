@@ -4,6 +4,7 @@ import com.xk.base.exception.BusinessException;
 import com.xk.base.util.XkBeanUtils;
 import com.xk.truck.upms.controller.api.dto.user.*;
 import com.xk.truck.upms.domain.model.UpmsUser;
+import com.xk.truck.upms.domain.model.UpmsUserProfile;
 import com.xk.truck.upms.domain.repository.UpmsUserRepository;
 
 import jakarta.persistence.criteria.JoinType;
@@ -94,49 +95,59 @@ public class UpmsUserService {
      * 4) 儲存 user
      * 5) 指派角色（replaceRoles = 覆蓋式指派）
      */
+    @Transactional
     public UpmsUserResp create(UpmsUserCreateReq req) {
-        // ---- 0) 參數防呆（DTO 驗證通常由 Controller 做，但 Service 仍保留最低限度防護）
         if (req == null) {
             throw new BusinessException("UPMS_USER_REQ_EMPTY", "建立使用者請求不得為空");
         }
 
-        // ---- 1) username normalize（非常關鍵：避免 Admin vs admin 變成兩個帳號）
+        // 1) normalize username
         final String normalizedUsername = UpmsUser.normalizeUsername(req.getUsername());
         if (!StringUtils.hasText(normalizedUsername)) {
             throw new BusinessException("UPMS_USER_USERNAME_EMPTY", "帳號不能為空");
         }
 
-        log.info("📌 [UpmsUserService] 建立使用者: {}", normalizedUsername);
-
-        // ---- 2) 唯一性檢查（請務必搭配 DB unique constraint，Service 檢查只是提升體驗）
+        // 2) unique check（DB unique constraint 仍要保留）
         if (userRepository.existsByUsername(normalizedUsername)) {
             throw new BusinessException(ERR_USER_EXISTS, MSG_USER_EXISTS);
         }
 
-        // ---- 3) 建立 User（注意：不要把 password 透過 copyProperties 直接塞進去）
+        // 3) 建立 user（白名單映射）
         UpmsUser user = new UpmsUser();
-        // 你可以繼續用 XkBeanUtils copy，但我建議「白名單欄位」更安全
-        // 這裡保留你既有工具，但把敏感欄位改為顯式設定
-        XkBeanUtils.copyNonNullProperties(req, user);
-
-        // username 一律以 normalize 後寫入（覆蓋 copy 的結果）
         user.setUsername(normalizedUsername);
 
-        // 密碼：一律 encode
         if (!StringUtils.hasText(req.getPassword())) {
             throw new BusinessException("UPMS_USER_PASSWORD_EMPTY", "密碼不能為空");
         }
         user.setPassword(passwordEncoder.encode(req.getPassword()));
 
-        // ---- 4) 儲存 user
-        UpmsUser saved = userRepository.save(user);
+        // enabled / locked 建議 Create 時不從 req 帶入（避免被亂改）
+        user.setEnabled(true);
+        user.setLocked(false);
 
-        // ---- 5) 指派角色（走中介表服務；避免 UserService 直接操作 userRoles 集合）
-        if (req.getRoleCodes() != null && !req.getRoleCodes().isEmpty()) {
-            userRoleService.replaceRoles(saved.getUuid(), req.getRoleCodes());
+        // 4) 建立 profile（選填）
+        boolean hasProfile =
+                StringUtils.hasText(req.getName()) ||
+                        StringUtils.hasText(req.getEmail()) ||
+                        StringUtils.hasText(req.getPhone());
+
+        if (hasProfile) {
+            UpmsUserProfile profile = new UpmsUserProfile();
+            profile.setName(req.getName());
+            profile.setEmail(req.getEmail());
+            profile.setPhone(req.getPhone());
+
+            // 你 entity 有 setProfile 維護雙向關聯 👍
+            user.setProfile(profile);
         }
 
-        log.info("[UpmsUserService] 使用者建立完成: {} ({})", saved.getUsername(), saved.getUuid());
+        // 5) 存 user（profile 會 cascade）
+        log.info("profile.user = {}", user.getProfile() == null ? null : user.getProfile().getUser());
+        UpmsUser saved = userRepository.save(user);
+
+        // 6) 指派角色（建議 roleCodes 在 DTO 已 @NotEmpty）
+        userRoleService.replaceRoles(saved.getUuid(), req.getRoleCodes());
+
         return XkBeanUtils.copyProperties(saved, UpmsUserResp::new);
     }
 

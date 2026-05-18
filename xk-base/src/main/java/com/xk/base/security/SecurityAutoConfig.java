@@ -8,6 +8,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -15,6 +16,10 @@ import org.springframework.security.crypto.factory.PasswordEncoderFactories;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import java.util.List;
 
 @Configuration
 @RequiredArgsConstructor
@@ -46,9 +51,33 @@ public class SecurityAutoConfig {
     }
 
     @Bean
-    @ConditionalOnMissingBean   // << 沒有 AuthenticationManager 才提供
+    @ConditionalOnMissingBean(AuthenticationManager.class)   // << 沒有 AuthenticationManager 才提供
     public AuthenticationManager authenticationManager(AuthenticationConfiguration configuration) throws Exception {
         return configuration.getAuthenticationManager();
+    }
+
+    // 把 props.cors 真正接進 Spring Security 的 CORS
+    @Bean
+    @ConditionalOnMissingBean(CorsConfigurationSource.class)
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration config = new CorsConfiguration();
+
+        if (props.getCors().getAllowedOrigins().contains("*")) {
+            config.setAllowedOriginPatterns(List.of("*"));
+        } else {
+            config.setAllowedOrigins(props.getCors().getAllowedOrigins());
+        }
+
+        config.setAllowedMethods(props.getCors().getAllowedMethods());
+        config.setAllowedHeaders(props.getCors().getAllowedHeaders());
+        config.setExposedHeaders(props.getCors().getExposedHeaders());
+
+        // 你目前是 "*"，所以這裡一定要 false
+        config.setAllowCredentials(false);
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", config);
+        return source;
     }
 
     @Bean
@@ -57,6 +86,8 @@ public class SecurityAutoConfig {
                                                    ObjectProvider<DaoAuthenticationProvider> daoProviderOp) throws Exception {
         http
                 .csrf(csrf -> csrf.disable())
+                // 啟用 CORS（會使用上面的 corsConfigurationSource）
+                .cors(Customizer.withDefaults())
                 .authorizeHttpRequests(authz -> authz
                         .requestMatchers(props.getPermitAll().toArray(String[]::new)).permitAll()
                         .anyRequest().authenticated()

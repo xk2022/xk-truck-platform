@@ -13,7 +13,8 @@ security:
     issuer: "xk-truck"
     expiry-minutes: 120
   cors:
-    allowed-origins: ["http://localhost:5173","http://localhost:3000"]
+#    allowed-origins: ["http://localhost:5173","http://localhost:3000"]
+    allowed-origins: ["*"]
     allowed-methods: ["GET","POST","PUT","DELETE","PATCH","OPTIONS"]
     allowed-headers: ["*"]
     exposed-headers: ["Authorization"]
@@ -24,11 +25,11 @@ security:
     - /v3/api-docs/**
     - /actuator/health
 
-logging:
-  level:
-    org.springframework.security: DEBUG
-    com.xk.base:  DEBUG
-    com.xk.truck: DEBUG   # 讓我們看得到 seed log
+#logging:
+#  level:
+#    org.springframework.security: DEBUG
+#    com.xk.base:  DEBUG
+#    com.xk.truck: DEBUG   # 讓我們看得到 seed log
 
 springdoc:
   api-docs:
